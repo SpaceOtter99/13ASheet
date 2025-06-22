@@ -62,34 +62,26 @@ def create_app():
         if not character:
             return jsonify({'error': 'Sheet not found'}), 404
 
+        # build a flat dict of stat-mods
+        stats = {
+            **{ f"stat-{stat}": val
+                for stat, val in character.stats.items() },
+            **{ f"mod-{stat}": character.modifier(stat)
+                for stat in character.stats }
+        }
+
+        # build a flat dict of defence pieces
+        defs = {}
+        for d in character.defences:
+            defs[f"bonus-{d}"] = character.get_defence_bonus(d)
+            defs[f"final-{d}"] = character.get_defence(d)
+            defs[f"stat-{d}"]  = character.get_defence_stat(d)
+
         return jsonify({
-            'stats': {
-                **{
-                    f"stat-{stat}": val
-                    for stat, val in character.stats.items()
-                },
-                **{
-                    f"mod-{stat}": character.modifier(stat)
-                    for stat in character.stats
-                }
-            },
-            'defences': {
-                'stats': {
-                    **{
-                        f"stat-{d}": character.get_defence_stat(d)
-                        for d in character.defences
-                    },
-                    **{
-                        f"bonus-{d}": character.get_defence_bonus(d)
-                        for d in character.defences
-                    },
-                    **{
-                        f"final-{d}": character.get_defence(d)
-                        for d in character.defences
-                    }
-                }
-            }
+            'stats':   stats,
+            'defences': defs,
         })
+
 
     @app.route('/sheets/<name>/update', methods=['POST'])
     def update_character(name):
@@ -97,19 +89,35 @@ def create_app():
         character = data.sheets.get(name)
         if not character:
             return jsonify({'error': 'Sheet not found'}), 404
+        
+        print(character)
 
-        payload = request.get_json() or {}
+        payload = request.get_json()["updates"] or {}
+        print(payload)
         for stat, val in payload.get("stats", {}).items():
             if stat.startswith("base-"):
                 key = stat.split("-", 1)[1]
                 character.stats[key] = val
+                print("Updated ", key, " to ", val)
 
         for defence, val in payload.get("defences", {}).items():
             if defence.startswith("base-"):
                 key = defence.split("-", 1)[1]
                 character.defences[key].base = val
+                print("Updated ", key, " to ", val)
+
+        for basic, info in payload.get("basic", {}).items():
+            if basic == "name":
+                character.name = info
+            elif basic == "race":
+                character.race = info
+            elif basic == "classname":
+                character.classname = info
+            elif basic == "level":
+                character.level = info
 
         data.sheets[name] = character
+        print(character)
         resp = jsonify({'status': 'ok'})
         return save_and_respond(data, resp)
 

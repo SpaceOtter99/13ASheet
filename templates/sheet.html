@@ -2,7 +2,10 @@
 {% block title %}{{ character.name }}{% endblock %}
 {% block content %}
   <body>
-    <h1>{{ character.name }}</h1>
+
+    <div class="container">
+      {% include './sheet/info.html' %}
+    </div>
 
     <div class="container">
       <div style="flex-grow: 14"> {% include './sheet/stats.html' %} </div>
@@ -32,7 +35,7 @@
 
       function scheduleSave() {
         clearTimeout(timer);
-        timer = setTimeout(doSave, 500);
+        timer = setTimeout(doSave, 100);
       }
 
       function flushSave() {
@@ -52,6 +55,7 @@
                 document
                   .querySelectorAll(`[data-section="${section}"][data-key="${key}"]`)
                   .forEach(el => {
+                    console.log(el, value)
                     if (el.tagName === 'INPUT') {
                       if (document.activeElement !== el) el.value = value;
                     } else {
@@ -66,7 +70,7 @@
           .catch(err => console.error(err));
       }
 
-      const inputs = document.querySelectorAll('input[data-section][data-key]');
+      const inputs = document.querySelectorAll('[data-section][data-key]');
       console.log('Found', inputs.length, 'elements with data-section & data-key');
       inputs.forEach(input => {
         console.log('Attaching listener to', input);
@@ -75,7 +79,7 @@
           const sec = this.dataset.section;
           const key = this.dataset.key;
           updated[sec] = updated[sec] || {};
-          updated[sec][key] = parseInt(this.value, 10) || 0;
+          updated[sec][key] = parseInt(this.value, 10) || this.value;
           scheduleSave();
         });
       });

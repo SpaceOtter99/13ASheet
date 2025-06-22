@@ -31,7 +31,7 @@
               data-section="defences"
               data-key="stat-{{defence}}"
             > 
-              + {{ character.get_defence_stat(defence) }} 
+              + {{ character.defences[defence].get_value_stat() }} 
             </p>
           </div>
           {% if character.get_defence_bonus(defence) %}
