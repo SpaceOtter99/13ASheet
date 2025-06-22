@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Sheets{% endblock %}
+{% block content %}
+  <body>
+    <h1>Sheets (visited {{ visits }} times)</h1>
+
+    <ul>
+      {% if characters %}
+        {% for c in characters %}
+          <li><a href="{{ url_for('sheet', name=c.name) }}">{{ c.name }}</a></li>
+        {% endfor %}
+      {% else %}
+        <li>No sheets yet.</li>
+      {% endif %}
+    </ul>
+
+    <h2>Add New Sheet</h2>
+    <form method="post">
+      <input type="text" name="name" placeholder="Character name" required>
+      <button type="submit">Add</button>
+    </form>
+  </body>
+{% endblock %}

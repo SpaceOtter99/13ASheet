@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %} Hello {% endblock %}
+{% block content %}
+  <body>
+    <h1>Hello, World!</h1>
+    <p>Welcome to your first Flask app using templates.</p>
+    <p><a href="{{ url_for('sheets') }}">Go to Sheets →</a></p>
+    <form method="post">
+      <button type="submit">Clear Cookie</button>
+    </form>
+    </form>
+  </body>
+{% endblock %}
