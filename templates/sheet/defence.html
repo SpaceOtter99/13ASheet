@@ -1,0 +1,68 @@
+<table id="defences">
+  <thead>
+    <tr>
+      {% for defence in character.defences %}
+        <th>{{ defence }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      {% for defence in character.defences %}
+      <td>
+        <input
+          type="number" min="0"
+          id="base-{{ defence }}"
+          data-section="defences"
+          data-key="base-{{defence}}"
+          value="{{ character.get_defence_base(defence) }}"
+        >
+        <p class="under">Base {{defence}}</p>
+      </td>
+      {% endfor %}
+    </tr>
+    <tr>
+      {% for defence in character.defences %}
+      <td>
+        <div class="container-inline">
+          <div style="flex-grow: 2">
+            <p
+              id="stat-{{defence}}"
+              data-section="defences"
+              data-key="stat-{{defence}}"
+            > 
+              + {{ character.get_defence_stat(defence) }} 
+            </p>
+          </div>
+          {% if character.get_defence_bonus(defence) %}
+          <div style="flex-grow: 1">
+            <input
+              type="number" min="0"
+              id="bonus-{{ defence }}"
+              data-section="defences"
+              data-key="bonus-{{defence}}"
+              value="{{ character.get_defence_bonus(defence) }}"
+            >
+          </div>
+          {% endif %}
+        </div>
+        <p class="under">Modifiers</p>
+      </td>
+      {% endfor %}
+    </tr>
+    <tr>
+      {% for defence in character.defences %}
+      <td>
+        <p
+          id="def-{{ defence }}"
+              data-section="defences"
+              data-key="final-{{defence}}"
+        >
+        {{ character.get_defence(defence) }}
+        </p>
+      </td>
+      {% endfor %}
+    </tr>
+  </tbody>
+  </tbody>
+</table>

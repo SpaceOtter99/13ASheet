@@ -1,0 +1,36 @@
+<table id="stats">
+  <thead>
+    <tr>
+      {% for stat in data.stats %}
+        <th>{{ stat }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      {% for stat in data.stats %}
+      <td>
+        <input
+          type="number" min="0"
+          id="base-{{ stat }}"
+          data-section="stats"
+          data-key="base-{{stat}}"
+          value="{{ character.stats[stat] }}"
+        >
+      </td>
+      {% endfor %}
+    </tr>
+    <tr>
+      {% for stat in data.stats %}
+        <td 
+        id="mod-{{ stat }}"
+        data-section="stats"
+        data-key="mod-{{stat}}"
+        >
+          {{ character.modifier(stat) }}
+        </td>
+      {% endfor %}
+    </tr>
+  </tbody>
+  </tbody>
+</table>

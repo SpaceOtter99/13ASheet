@@ -4,100 +4,88 @@
   <body>
     <h1>{{ character.name }}</h1>
 
-    <table id="stats">
-      <thead>
-        <tr>
-          {% for stat in data.stats %}
-            <th>{{ stat }}</th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          {% for stat in data.stats %}
-          <td>
-            <input
-              type="number" min="0"
-              id="stat-{{ stat }}"
-              value="{{ character.stats[stat] }}"
-            >
-          </td>
-          {% endfor %}
-        </tr>
-        <tr>
-          {% for stat in data.stats %}
-            <td id="mod-{{ stat }}">{{ character.modifier(stat) }}</td>
-          {% endfor %}
-        </tr>
-      </tbody>
-      </tbody>
-    </table>
-
+    <div class="container">
+      <div style="flex-grow: 14"> {% include './sheet/stats.html' %} </div>
+      <div style="flex-grow: 9"> {% include './sheet/defence.html' %} </div>
+    </div>
     
-
     <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const stats       = {{ data.stats|tojson}};
-        const name        = "{{ character.name }}";
-        let timer         = null;
-        // clone current stats
-        let updatedStats  = {};
+    document.addEventListener('DOMContentLoaded', () => {
+      const name = "{{ character.name }}";
+      let timer, updated = {};
 
-        // send the full updatedStats to the server
-        function doSave(options = {}) {
-          fetch(`{{ url_for('update_character', name=character.name) }}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            keepalive: options.keepalive || false,
-            body: JSON.stringify({ stats: updatedStats })
-          })
-          .then(r => r.json())
-          .then(json => {
-            if (json.status !== 'ok') {
-              console.warn('Save failed', json);
-            }
-          })
-          .catch(err => console.error('Save error', err));
-        }
+      function doSave(opts={}) {
+        console.log("Saving with data", updated)
+        fetch(`{{ url_for('update_character', name=character.name) }}`, {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          keepalive: opts.keepalive,
+          body: JSON.stringify({ updates: updated })
+        })
+        .then(r => r.json())
+        .then(j => {
+          if (j.status==='ok') fetchLatestData();
+          else console.warn('Save failed', j);
+        })
+        .catch(err => console.error(err));
+      }
 
-        // schedule a debounced save in 5s
-        function scheduleSave() {
+      function scheduleSave() {
+        clearTimeout(timer);
+        timer = setTimeout(doSave, 500);
+      }
+
+      function flushSave() {
+        if (timer) {
           clearTimeout(timer);
-          timer = setTimeout(() => doSave(), 5000);
+          doSave({ keepalive:true });
+          timer = null;
         }
+      }
 
-        // flush immediately (for unload)
-        function flushSave() {
-          if (timer !== null) {
-            clearTimeout(timer);
-            doSave({ keepalive: true });
-            timer = null;
-          }
-        }
+      function fetchLatestData() {
+        fetch(`{{ url_for('get_character_data', name=character.name) }}`)
+          .then(r => r.json())
+          .then(data => {
+            Object.entries(data).forEach(([section, payload]) => {
+              Object.entries(payload).forEach(([key, value]) => {
+                document
+                  .querySelectorAll(`[data-section="${section}"][data-key="${key}"]`)
+                  .forEach(el => {
+                    if (el.tagName === 'INPUT') {
+                      if (document.activeElement !== el) el.value = value;
+                    } else {
+                      el.textContent = value;
+                    }
+                  });
+              });
+            });
+            // reset our buffer
+            updated = {};
+          })
+          .catch(err => console.error(err));
+      }
 
-        // bind inputs
-        stats.forEach(stat => {
-          const input = document.getElementById(`stat-${stat}`);
-          input.addEventListener('input', () => {
-            const val = parseInt(input.value, 10) || 0;
-            updatedStats[stat] = val;
-            // immediate modifier update
-            document.getElementById(`mod-${stat}`)
-              .textContent = Math.floor((val - 10) / 2);
-            // debounce the save
-            scheduleSave();
-          });
-        });
-
-        // on page unload or tab close, flush pending save
-        window.addEventListener('beforeunload', flushSave);
-        // also handle visibilitychange (e.g. mobile switch)
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'hidden') {
-            flushSave();
-          }
+      const inputs = document.querySelectorAll('input[data-section][data-key]');
+      console.log('Found', inputs.length, 'elements with data-section & data-key');
+      inputs.forEach(input => {
+        console.log('Attaching listener to', input);
+        input.addEventListener('input', function() {
+          // inside here `this` is the input itself
+          const sec = this.dataset.section;
+          const key = this.dataset.key;
+          updated[sec] = updated[sec] || {};
+          updated[sec][key] = parseInt(this.value, 10) || 0;
+          scheduleSave();
         });
       });
+
+      window.addEventListener('beforeunload', flushSave);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flushSave();
+      });
+    });
     </script>
+
   </body>
 {% endblock %}

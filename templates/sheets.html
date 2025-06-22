@@ -2,12 +2,12 @@
 {% block title %}Sheets{% endblock %}
 {% block content %}
   <body>
-    <h1>Sheets (visited {{ visits }} times)</h1>
+    <h1>Sheets</h1>
 
     <ul>
       {% if characters %}
         {% for c in characters %}
-          <li><a href="{{ url_for('sheet', name=c.name) }}">{{ c.name }}</a></li>
+          <li><a href="{{ url_for('sheet', name=c) }}">{{ c }}</a></li>
         {% endfor %}
       {% else %}
         <li>No sheets yet.</li>

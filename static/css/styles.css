@@ -26,6 +26,20 @@ main {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+p {
+  margin: 0;
+}
+
+.under {
+  height: 9px;
+  font-size: 9px;
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -34,7 +48,8 @@ table {
 
 th, td {
   border: 1px solid #ddd;
-  padding: 0;
+  position: relative;
+  padding: 2px;
   text-align: center;
   font-style: italic;
   color: #333;
@@ -65,4 +80,21 @@ input::-webkit-inner-spin-button {
 }
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+.container {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.container-inline {
+  display: inline-flex;
+  gap: 0;
+}
+
+.container div {
+  flex-basis: 0;
 }
