@@ -1,68 +1,199 @@
 <table id="defences">
   <thead>
     <tr>
-      {% for defence in character.defences %}
+      {% for defence in DEFENCES %}
         <th>{{ defence }}</th>
       {% endfor %}
     </tr>
   </thead>
   <tbody>
     <tr>
-      {% for defence in character.defences %}
+      {% for defence in DEFENCES %}
       <td>
-        <input
-          type="number" min="0"
-          id="base-{{ defence }}"
-          data-section="defences"
-          data-key="base-{{defence}}"
-          value="{{ character.get_defence_base(defence) }}"
-        >
-        <p class="under">Base {{defence}}</p>
-      </td>
-      {% endfor %}
-    </tr>
-    <tr>
-      {% for defence in character.defences %}
-      <td>
-        <div class="container-inline">
-          <div style="flex-grow: 2">
-            <p
-              id="stat-{{defence}}"
-              data-section="defences"
-              data-key="stat-{{defence}}"
-            > 
-              + {{ character.defences[defence].get_value_stat() }} 
-            </p>
-          </div>
-          {% if character.get_defence_bonus(defence) %}
-          <div style="flex-grow: 1">
-            <input
-              type="number" min="0"
-              id="bonus-{{ defence }}"
-              data-section="defences"
-              data-key="bonus-{{defence}}"
-              value="{{ character.get_defence_bonus(defence) }}"
-            >
-          </div>
-          {% endif %}
+        <p class="over">Base {{ defence }}</p>
+        <div>
+          <input
+            type="number" min="0"
+            id="{{ defence }}-base"
+            data-section="defences"
+            data-key="{{ defence }}-base"
+            value="{{ character.defences[defence].base }}"
+          >
         </div>
-        <p class="under">Modifiers</p>
       </td>
       {% endfor %}
     </tr>
+
     <tr>
-      {% for defence in character.defences %}
+      {% for defence in DEFENCES %}
+      <td>
+        <p class="over">Modifiers</p>
+            <p
+              id="{{ defence }}-mod"
+              data-section="defences"
+              data-key="{{ defence }}-mod"
+              type="number"
+            ></p>
+            <button
+              type="button"
+              class="edit-statlist-btn rightHover"
+              data-defence="{{ defence }}"
+            ><i class="fa fa-gear"></i></button>
+
+          <input
+            type="hidden"
+            id="{{ defence }}-statlist"
+            data-section="defences"
+            data-key="{{ defence }}-statlist"
+            value="{{ character.defences[defence].statlist }}"
+          >
+      </td>
+      {% endfor %}
+    </tr>
+
+    <tr>
+      {% for defence in DEFENCES %}
       <td>
         <p
-          id="def-{{ defence }}"
-              data-section="defences"
-              data-key="final-{{defence}}"
-        >
-        {{ character.get_defence(defence) }}
-        </p>
+          id="{{ defence }}-def"
+          data-section="defences"
+          data-key="{{ defence }}-final"
+          type="number"
+        ></p>
       </td>
       {% endfor %}
     </tr>
   </tbody>
-  </tbody>
 </table>
+
+{% for defence in DEFENCES %}
+<dialog id="{{ defence }}-dialog">
+  <form method="dialog">
+    <p>Select stats for <strong>{{ defence }}</strong>:</p>
+    <div class="stat-grid">
+    {% for stat in STATS %}
+      <div>
+        <input
+          type="checkbox"
+          id="{{defence}}-{{stat}}-checkbox"
+          name="stat"
+          value="{{ stat }}"
+          {% if stat in character.defences[defence].statlist %}checked{% endif %}
+        > 
+        <label for="{{defence}}-{{stat}}-checkbox">
+          {{ stat }}
+        </label>
+      </div>
+    {% endfor %}
+      <div style="grid-column: 1 / span 3">
+        <p class="over"> Bonus {{ defence }}</p>
+        <input
+          type="number" min="0"
+          id="{{ defence }}-bonus"
+          data-section="defences"
+          data-key="{{ defence }}-bonus"
+          value="{{ character.defences[defence].bonus }}"
+        >
+      </div>
+      <button value="cancel">Cancel</button>
+      <button id="{{ defence }}-dialog-ok" value="default">OK</button>
+    </div>
+  </form>
+</dialog>
+{% endfor %}
+
+<style>
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 5rem);
+    grid-template-rows: repeat(3, 2rem) 1.5rem;
+    gap: 0.5em;
+  }
+
+  .stat-grid div {
+    border: 1px solid var(--surface-accent);
+    padding: 0 4px;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const levelInput = document.getElementById('level');
+  const STATS      = {{ STATS|tojson }};
+  const DEFENCES   = {{ DEFENCES|tojson }};
+
+  // utility to get current stat-level from the stats table
+  function getStatLevel(stat) {
+    console.log(stat)
+    const txt = document.getElementById(stat + '-level').textContent;
+    return parseInt(txt.replace('+',''), 10) || 0;
+  }
+
+  // median of an array of numbers
+  function median(arr) {
+    if (!arr.length) return 0;
+    arr = arr.slice().sort((a,b)=>a-b);
+    return arr[Math.floor((arr.length-1)/2)];
+  }
+
+  // recalculates all defences
+  function updateDefences() {
+
+    DEFENCES.forEach(def => {
+      const baseEl  = document.getElementById(def + '-base');
+      const bonusEl = document.getElementById(def + '-bonus');
+      const statlistEl = document.getElementById(def + '-statlist');
+      const modEl   = document.getElementById(def + '-mod');
+      const defEl   = document.getElementById(def + '-def');
+
+      const baseVal  = parseInt(baseEl.value, 10) || 0;
+      const bonusVal = parseInt(bonusEl.value, 10) || 0;
+      const stats    = statlistEl.value
+                        .split(',')
+                        .filter(s=>s)
+                        .map(s=> getStatLevel(s) );
+      const defenceStat = median(stats);
+      const modVal  = defenceStat + bonusVal;
+      const finalVal= baseVal + modVal;
+
+      modEl.textContent = (modVal>=0? '+'+modVal: modVal);
+      defEl.textContent = finalVal;
+    });
+  }
+
+  // wire up inputs
+  levelInput.addEventListener('input', updateDefences);
+  DEFENCES.forEach(def => {
+    document.getElementById(def + '-base')
+            .addEventListener('input', updateDefences);
+    document.getElementById(def + '-bonus')
+            .addEventListener('input', updateDefences);
+  });
+  STATS.forEach(stat => {
+    document.getElementById(stat + '-base')
+            .addEventListener('input', updateDefences);
+  });
+
+  // wire up each “Edit…” button + its dialog
+  DEFENCES.forEach(def => {
+    const btn    = document.querySelector(`button.edit-statlist-btn[data-defence="${def}"]`);
+    const dialog = document.getElementById(def + '-dialog');
+    const hidden = document.getElementById(def + '-statlist');
+    const okBtn  = document.getElementById(def + '-dialog-ok');
+
+    btn.addEventListener('click', () => dialog.showModal());
+
+    okBtn.addEventListener('click', () => {
+      const checked = Array.from(dialog.querySelectorAll('input[name="stat"]:checked'))
+                           .map(cb=>cb.value);
+      hidden.value = checked.join(',');
+      hidden.dispatchEvent(new Event('input', { bubbles: true }));
+      dialog.close();
+      updateDefences();
+    });
+  });
+
+  // initial paint
+  updateDefences();
+});
+</script>

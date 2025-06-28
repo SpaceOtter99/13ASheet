@@ -1,37 +1,40 @@
 <div style="flex-grow: 1" class="bordered">  
+  <p class="over"> Name </p>
   <input
   type="text"
   id="name"
   data-section="basic"
   data-key="name"
-  value="{{ character.name }}"
+  value="{{ character.basic.name }}"
   >
-  <p class="under"> Name </p>
 </div>
 <div style="flex-grow: 1" class="bordered">  
+  <p class="over"> Race </p>
   <input
   type="text"
   id="race"
   data-section="basic"
   data-key="race"
-  value="{{ character.race }}"
+  value="{{ character.basic.race }}"
   >
 </div>
 <div style="flex-grow: 1" class="bordered">  
+  <p class="over"> Class </p>
   <input
   type="text"
   id="classname"
   data-section="basic"
   data-key="classname"
-  value="{{ character.classname }}"
+  value="{{ character.basic.classname }}"
   >  
 </div>
 <div style="flex-grow: 1" class="bordered">  
-<input
+  <p class="over"> Level </p>
+  <input
   type="number"
   id="level"
   data-section="basic"
   data-key="level"
-  value="{{ character.level }}"
+  value="{{ character.basic.level }}"
   >  
 </div>

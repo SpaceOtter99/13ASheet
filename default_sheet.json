@@ -1,0 +1,66 @@
+{
+  "basic": {
+    "classname": "",
+    "level": 1,
+    "name": "",
+    "race": ""
+  },
+  "defences": {
+    "AC": {
+      "base": 10,
+      "bonus": 0,
+      "final": 0,
+      "mod": 0,
+      "stat": 0,
+      "statlist": "DEX,CON,WIS"
+    },
+    "MD": {
+      "base": 10,
+      "bonus": 0,
+      "final": 0,
+      "mod": 0,
+      "stat": 0,
+      "statlist": "INT,WIS,CHA"
+    },
+    "PD": {
+      "base": 10,
+      "bonus": 0,
+      "final": 0,
+      "mod": 0,
+      "stat": 0,
+      "statlist": "STR,DEX,CON"
+    }
+  },
+  "stats": {
+    "CHA": {
+      "base": 10,
+      "level": 0,
+      "mod": 0
+    },
+    "CON": {
+      "base": 10,
+      "level": 0,
+      "mod": 0
+    },
+    "DEX": {
+      "base": 10,
+      "level": 0,
+      "mod": 0
+    },
+    "INT": {
+      "base": 10,
+      "level": 0,
+      "mod": 0
+    },
+    "STR": {
+      "base": 10,
+      "level": 0,
+      "mod": 0
+    },
+    "WIS": {
+      "base": 10,
+      "level": 0,
+      "mod": 0
+    }
+  }
+}

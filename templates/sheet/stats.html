@@ -1,36 +1,221 @@
 <table id="stats">
   <thead>
     <tr>
-      {% for stat in data.stats %}
+      {% for stat in STATS %}
         <th>{{ stat }}</th>
       {% endfor %}
     </tr>
   </thead>
   <tbody>
+
     <tr>
-      {% for stat in data.stats %}
-      <td>
-        <input
-          type="number" min="0"
-          id="base-{{ stat }}"
-          data-section="stats"
-          data-key="base-{{stat}}"
-          value="{{ character.stats[stat] }}"
-        >
-      </td>
+      {% for stat in STATS %}
+        <td>
+          <p class="over">Base {{stat}}</p>
+          <input
+            type="number" min="0"
+            id="{{ stat }}-base"
+            data-section="stats"
+            data-key="{{ stat }}-base"
+            value="{{ character['stats'][stat]['base'] }}"
+          >
+        </td>
       {% endfor %}
     </tr>
+
     <tr>
-      {% for stat in data.stats %}
-        <td 
-        id="mod-{{ stat }}"
-        data-section="stats"
-        data-key="mod-{{stat}}"
+      {% for stat in STATS %}
+        {% set base = character['stats'][stat]['base']|int %}
+        {% set raw = ((base - 10) // 2) %}
+        <td>
+        <p class="over">Modifiers</p>
+        <p 
+          id="{{ stat }}-mod"
+          data-section="stats"
+          data-key="{{ stat }}-mod"
+          type="number"
         >
-          {{ character.modifier(stat) }}
+          {{ '+' ~ raw if raw > 0 else raw }}
+        </p>
+        </td>
+      {% endfor %}
+    </tr>
+
+    {% set lvl = character['basic']['level']|int %}
+    <tr>
+      {% for stat in STATS %}
+        {% set base = character['stats'][stat]['base']|int %}
+        {% set raw = ((base - 10) // 2) %}
+        {% set tot = raw + lvl %}
+        <td>
+          <p 
+          class="final"
+          id="{{ stat }}-level"
+          data-section="stats"
+          data-key="{{ stat }}-level"
+          type="number"
+          >
+            {{ '+' ~ tot if tot > 0 else tot }}
+          </p>
+          <button class="rightHover" onclick="openRollDialog({{ tot }})">
+            <i class="fa fa-dice-d20"></i>
+          </button>
         </td>
       {% endfor %}
     </tr>
   </tbody>
-  </tbody>
 </table>
+
+<dialog id="roll-dialog">
+  <div class="roll-container">
+    <div id="roll-display">0</div>
+    <i class="fa fa-dice-d20 dice-icon"></i>
+  </div>
+
+  <div>
+    <p class="over">Result</p>
+    <div id="final-box"> </div>
+  </div>
+
+  <div class="dialog-controls">
+    <button id="dialog-roll">
+      <i class="fa fa-dice"></i> Roll
+    </button>
+    <button id="dialog-close">Close</button>
+  </div>
+</dialog>
+
+<style>
+  .roll-container {
+    position: relative;
+    width: 5em;
+    height: 5em;
+    margin: 1em auto;
+  }
+  .dice-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4em;
+    color: rgba(0, 0, 0, 0.1);
+    z-index: 0;
+  }
+  #roll-display {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    line-height: 5em;
+    text-align: center;
+    font-size: 2.5em;
+    transform: translate(0%, -70%);
+  }
+  #final-box {
+    font-size: 1.1em;
+    text-align: center;
+    border: 1px solid #ccc;
+    padding: 0.5em;
+    width: 4em;
+    margin: 0 auto;
+  }
+  .dialog-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+    margin-top: 1em;
+  }
+</style>
+
+<script>
+  // — Globals & helpers —
+  var levelInput, baseInputs;
+  var dialog, display, finalBox, rollBtn, closeBtn;
+  var currentStatLevel = 0;
+
+  // Recalculate modifiers & levels
+  function updateStats() {
+    var lvl = parseInt(levelInput.value, 10) || 0;
+    baseInputs.forEach(function (input) {
+      var stat    = input.getAttribute('data-key').split("-")[0];
+      var baseVal = parseInt(input.value, 10) || 0;
+      var raw     = Math.floor((baseVal - 10) / 2);
+      var total   = raw + lvl;
+
+      document.getElementById(stat + '-mod').textContent   = raw  >= 0 ? '+' + raw  : raw;
+      document.getElementById(stat + '-level').textContent = total >= 0 ? '+' + total : total;
+    });
+  }
+
+  // Basic d20 roll
+  function randomBetween(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  // Animate the big die, then show final = stat + roll
+  function animateRoll() {
+    var duration = 1000,
+        interval = 50,
+        steps    = Math.floor(duration / interval),
+        count    = 0,
+        roll     = randomBetween(1, 20),
+        summed   = roll + currentStatLevel;
+
+    finalBox.textContent = '…';
+
+    var iv = setInterval(function() {
+      display.textContent = randomBetween(1, 20);
+      if (++count >= steps) {
+        clearInterval(iv);
+        display.textContent = roll;
+        finalBox.textContent   = summed;
+      }
+    }, interval);
+  }
+
+  // Opens dialog and kicks off first animation
+  function openRollDialog(statLevel) {
+    currentStatLevel                  = statLevel;
+    display.textContent               = '…';
+    finalBox.textContent              = '…';
+    animateRoll();
+    dialog.showModal();
+  }
+
+  // — DOM ready: grab elements & wire events —
+  document.addEventListener('DOMContentLoaded', function () {
+    // stats inputs
+    levelInput = document.getElementById('level');
+    baseInputs = document.querySelectorAll('#stats input[data-section]');
+
+    // dialog elements
+    dialog    = document.getElementById('roll-dialog');
+    display   = document.getElementById('roll-display');
+    finalBox  = document.getElementById('final-box');
+    rollBtn   = document.getElementById('dialog-roll');
+    closeBtn  = document.getElementById('dialog-close');
+
+    // stat recalculation
+    levelInput.addEventListener('input', updateStats);
+    baseInputs.forEach(function (input) {
+      input.addEventListener('input', updateStats);
+    });
+    updateStats();
+
+    // wire each dice‐button in the stat‐level cells
+    document
+      .querySelectorAll('td[data-key$="-level"] .rightHover')
+      .forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var lvl = parseInt(btn.parentNode.textContent, 10) || 0;
+          openRollDialog(lvl);
+        });
+      });
+
+    // dialog controls
+    rollBtn.addEventListener('click', animateRoll);
+    closeBtn.addEventListener('click', function() {
+      dialog.close();
+    });
+  });
+</script>

@@ -4,12 +4,12 @@
   <body>
 
     <div class="container">
-      {% include './sheet/info.html' %}
+      {% include 'sheet/info.html' %}
     </div>
 
     <div class="container">
-      <div style="flex-grow: 14"> {% include './sheet/stats.html' %} </div>
-      <div style="flex-grow: 9"> {% include './sheet/defence.html' %} </div>
+      <div style="flex-grow: 14"> {% include 'sheet/stats.html' %} </div>
+      <div style="flex-grow: 9"> {% include 'sheet/defence.html' %} </div>
     </div>
     
     <script>
@@ -19,7 +19,7 @@
 
       function doSave(opts={}) {
         console.log("Saving with data", updated)
-        fetch(`{{ url_for('update_character', name=character.name) }}`, {
+        fetch(`{{ url_for('update_character', id=request.view_args.id) }}`, {
           method: 'POST',
           headers: { 'Content-Type':'application/json' },
           keepalive: opts.keepalive,
@@ -35,7 +35,7 @@
 
       function scheduleSave() {
         clearTimeout(timer);
-        timer = setTimeout(doSave, 100);
+        timer = setTimeout(doSave, 300);
       }
 
       function flushSave() {
@@ -47,7 +47,7 @@
       }
 
       function fetchLatestData() {
-        fetch(`{{ url_for('get_character_data', name=character.name) }}`)
+        fetch(`{{ url_for('get_character_data', id=request.view_args.id) }}`)
           .then(r => r.json())
           .then(data => {
             Object.entries(data).forEach(([section, payload]) => {
@@ -55,7 +55,6 @@
                 document
                   .querySelectorAll(`[data-section="${section}"][data-key="${key}"]`)
                   .forEach(el => {
-                    console.log(el, value)
                     if (el.tagName === 'INPUT') {
                       if (document.activeElement !== el) el.value = value;
                     } else {
@@ -64,7 +63,6 @@
                   });
               });
             });
-            // reset our buffer
             updated = {};
           })
           .catch(err => console.error(err));
@@ -73,9 +71,7 @@
       const inputs = document.querySelectorAll('[data-section][data-key]');
       console.log('Found', inputs.length, 'elements with data-section & data-key');
       inputs.forEach(input => {
-        console.log('Attaching listener to', input);
         input.addEventListener('input', function() {
-          // inside here `this` is the input itself
           const sec = this.dataset.section;
           const key = this.dataset.key;
           updated[sec] = updated[sec] || {};
