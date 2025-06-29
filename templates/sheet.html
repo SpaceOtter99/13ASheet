@@ -20,6 +20,8 @@
   {% include 'sheet/roll_dialog.html' %}
 
   <script>
+    console.log({{character.to_dict()|tojson}})
+
     document.addEventListener('DOMContentLoaded', () => {
       const name = "{{ character.name }}";
       let timer, updated = {};
@@ -108,8 +110,12 @@
                     }
                     const newRow = row.cloneNode(true);
 
-                    const newRowEls = newRow.querySelectorAll('[data-key]');
-                    newRowEls.forEach(el => {
+                    const newRowIndexes = newRow.querySelectorAll('[data-index]');
+                    newRowIndexes.forEach(el => {
+                      el.dataset.index = blankIdx;
+                    });
+                    const newRowData = newRow.querySelectorAll('[data-key]');
+                    newRowData.forEach(el => {
                       const [_, field] = el.dataset.key.split('-', 2);
                       el.dataset.key = `${blankIdx}-${field}`;
                       if (el.tagName === 'INPUT' || el.tagName === "TEXTAREA") el.value = '';

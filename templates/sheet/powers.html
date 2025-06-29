@@ -1,49 +1,226 @@
-<table style="width: 100%;" data-iterable>
-<thead>
-<tr>
-<td colspan="3"><h2>Powers / Spells</h2></td>
-</tr>
-  <tr>
-    <th>
-      Lvl
-    </th>
-    <th>
-      Name
-    </th>
-    <th>
-      Description
-    </th>
-  </tr>
-</thead>
-{% set list = character.powers | default([{}], true) %}
-{% set all = list + [{}] %}
-{% for power in all %}
-  <tr iterable-section>
-    <td style="width: 1.5rem">
-        <input
-          type="number"
-          data-section="powers"
-          data-key="{{ loop.index0 }}-level"
-          value="{{ power.level }}"
-        >
-    </td>
-    <td style="width: 15rem">
-        <input
-          type="text"
-          data-section="powers"
-          data-key="{{ loop.index0 }}-name"
-          value="{{ power.name }}"
-        >
-    </td>
-    <td>
-      <div class="container inline">
-        <textarea
-          class="autoresizing"
-          data-section="powers"
-          data-key="{{ loop.index0 }}-notes"
-        >{{ power.notes }}</textarea>
-      </div>
-    </td>
-  </tr>
-{% endfor %}
+<table style="width: 100%;">
+  <thead>
+    <tr>
+      <td colspan="4">
+        <h2>Powers / Spells</h2>
+      </td>
+    </tr>
+    <tr>
+      <th>Uses</th>
+      <th>Lvl</th>
+      <th>Name</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  {% set list = character.powers | default([{}], true) %}
+  {% set all = list + [{}] %}
+  <tbody data-iterable>
+    {% for power in all %}
+    <tr iterable-section>
+      <td class="editable-uses" data-index="{{ loop.index0 }}" title="Right-click to edit" style="width: 2.8rem;">
+        <div class="uses-content"></div>
+        <i class="fa fa-gear editable-icon" title="Right-click to edit uses"></i>
+        <input type="hidden" id="uses-{{ loop.index0 }}" data-section="powers" data-key="{{ loop.index0 }}-uses"
+          value="{{ power.uses|default('daily:1') }}">
+      </td>
+
+      <td style="width: 1.5rem">
+        <input type="number" data-section="powers" data-key="{{ loop.index0 }}-level" value="{{ power.level }}">
+      </td>
+      <td style="width: 15rem">
+        <input type="text" data-section="powers" data-key="{{ loop.index0 }}-name" value="{{ power.name }}">
+      </td>
+      <td>
+        <div class="container inline">
+          <textarea class="autoresizing" data-section="powers"
+            data-key="{{ loop.index0 }}-notes">{{ power.notes }}</textarea>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
+
+{% for power in all %}
+<dialog id="uses-dialog-{{ loop.index0 }}">
+  <form method="dialog">
+    <p>Set uses for <strong>{{ power.name or ('Power ' ~ (loop.index0 + 1)) }}</strong>:</p>
+    <div class="uses-grid">
+      <label>
+        <input type="radio" name="uses-type-{{ loop.index0 }}" value="daily" checked>
+        Daily
+      </label>
+      <input type="number" id="daily-count-{{ loop.index0 }}" min="0"
+        value="{{ (power.uses|default('daily:1')).split(':')[1]|default(1) }}">
+
+      <label>
+        <input type="radio" name="uses-type-{{ loop.index0 }}" value="recharge">
+        Recharge
+      </label>
+      <input type="number" id="recharge-count-{{ loop.index0 }}" min="1" max="20"
+        value="{{ (power.uses|default('recharge:1')).split(':')[1]|default(1) }}">
+
+      <label>
+        <input type="radio" name="uses-type-{{ loop.index0 }}" value="perbattle">
+        Per Battle
+      </label>
+      <input type="number" id="perbattle-count-{{ loop.index0 }}" min="0"
+        value="{{ (power.uses|default('perbattle:1')).split(':')[1]|default(1) }}">
+
+      <label>
+        <input type="radio" name="uses-type-{{ loop.index0 }}" value="atwill">
+        At Will
+      </label>
+    </div>
+    <div style="text-align:center; margin-top:1em;">
+      <button value="cancel">Cancel</button>
+      <button id="uses-dialog-ok-{{ loop.index0 }}" value="default">OK</button>
+    </div>
+  </form>
+</dialog>
+{% endfor %}
+
+<style>
+  .editable-uses {
+    position: relative;
+    cursor: context-menu;
+    padding: 0;
+  }
+
+  .edit-uses-icon {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 1em;
+    pointer-events: none;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+  }
+
+  .editable-uses:hover .edit-uses-icon {
+    opacity: 1;
+    cursor: context-menu;
+  }
+
+  .uses-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    box-sizing: border-box;
+    padding-right: .3rem;
+    height: 100%;
+    width: 2.8rem;
+    line-height: 1;
+  }
+
+  .uses-grid {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 0.5em;
+    align-items: center;
+  }
+
+  tbody[data-iterable] tr:last-child td.editable-uses .uses-content,
+  tbody[data-iterable] tr:last-child td.editable-uses p,
+  tbody[data-iterable] tr:last-child td.editable-uses i {
+    display: none;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+
+    document.querySelectorAll('td.editable-uses').forEach(td => {
+      const idx = td.dataset.index;
+      const dialog = document.getElementById(`uses-dialog-${idx}`);
+      const hidden = document.getElementById(`uses-${idx}`);
+      const okBtn = document.getElementById(`uses-dialog-ok-${idx}`);
+      const radios = dialog.querySelectorAll(`input[name="uses-type-${idx}"]`);
+      const dailyInput = dialog.querySelector(`#daily-count-${idx}`);
+      const rechargeInput = dialog.querySelector(`#recharge-count-${idx}`);
+      const perbattleInput = dialog.querySelector(`#perbattle-count-${idx}`);
+
+      function updateUsesCell(val) {
+        const [type, count] = val.split(':');
+        const container = td.querySelector('.uses-content');
+        container.innerHTML = '';
+        if (type === 'daily') {
+          for (let i = 0; i < Number(count); i++) {
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            container.appendChild(cb);
+          }
+        } else if (type === 'recharge') {
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          container.appendChild(cb);
+          const p = document.createElement('p');
+          p.textContent = `${count}+`;
+          p.className = 'over right';
+          container.appendChild(p);
+        } else if (type === 'perbattle') {
+          for (let i = 0; i < Number(count); i++) {
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            container.appendChild(cb);
+          }
+          const p = document.createElement('p');
+          p.className = 'over';
+          p.textContent = 'per battle';
+          container.appendChild(p);
+        } else {
+          container.textContent = 'At Will';
+        }
+      }
+
+      updateUsesCell(hidden.value);
+
+      td.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        const [t, c] = hidden.value.split(':');
+        radios.forEach(r => r.checked = r.value === t);
+        dailyInput.value = t === 'daily' ? c : dailyInput.value;
+        rechargeInput.value = t === 'recharge' ? c : rechargeInput.value;
+        perbattleInput.value = t === 'perbattle' ? c : perbattleInput.value;
+        dialog.showModal();
+      });
+
+      okBtn.addEventListener('click', () => {
+        const sel = Array.from(radios).find(r => r.checked).value;
+        let val = sel + ':';
+        if (sel === 'daily') val += dailyInput.value;
+        else if (sel === 'recharge') val += rechargeInput.value;
+        else if (sel === 'perbattle') val += perbattleInput.value;
+        hidden.value = val;
+        updateUsesCell(val);
+        const row = td.closest('tr');
+        const lvl   = row.querySelector('input[data-key$="-level"]').value;
+        const name  = row.querySelector('input[data-key$="-name"]').value.trim();
+        const notes = row.querySelector('textarea[data-key$="-notes"]').value.trim();
+        if (!lvl && !name && !notes) {
+          hidden.value = '';
+          updateUsesCell('');
+        }
+        hidden.dispatchEvent(new Event('change', { bubbles: true }));
+        dialog.close();
+      });
+    });
+
+  document.querySelectorAll('tbody[data-iterable] tr').forEach(tr => {
+    ['input[data-key$="-level"]', 'input[data-key$="-name"]', 'textarea[data-key$="-notes"]']
+      .forEach(sel => {
+        tr.querySelector(sel).addEventListener('change', () => {
+          const lvl   = tr.querySelector('input[data-key$="-level"]').value;
+          const name  = tr.querySelector('input[data-key$="-name"]').value.trim();
+          const notes = tr.querySelector('textarea[data-key$="-notes"]').value.trim();
+          if (!lvl && !name && !notes) {
+            const idx    = tr.querySelector('td.editable-uses').dataset.index;
+            const hidden = document.getElementById(`uses-${idx}`);
+            hidden.value = '';
+            tr.querySelector('td.editable-uses .uses-content').innerHTML = '';
+          }
+        });
+      });
+  });
+  });
+</script>

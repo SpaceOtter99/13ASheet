@@ -25,7 +25,7 @@
         <p class="over">Modifiers</p>
         <p id="{{ defence }}-mod" data-section="defences" data-key="{{ defence }}-mod" type="number"></p>
 
-        <i class="fa fa-gear edit-statlist-icon"></i>
+        <i class="fa fa-gear editable-icon"></i>
 
         <input type="hidden" id="{{ defence }}-statlist" data-section="defences" data-key="{{ defence }}-statlist"
           value="{{ character.defences[defence].statlist }}">
@@ -93,19 +93,6 @@
 
   .editable-defence {
     position: relative;
-    cursor: context-menu;
-  }
-
-  .edit-statlist-icon {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    font-size: .5em;
-    pointer-events: none;
-    color: var(--text);
-  }
-
-  .editable-defence:hover {
     cursor: context-menu;
   }
 </style>

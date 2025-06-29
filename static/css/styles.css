@@ -79,9 +79,18 @@ textarea.autoresizing {
   text-align: center;
 }
 
+.over.right {
+  text-align: right;
+}
+
 table {
   width: 100%;
+  height: 1px;
   border-collapse: collapse;
+}
+
+tr, th, td {
+  height: 100%;
 }
 
 th,
@@ -89,7 +98,6 @@ td,
 .bordered {
   border: 1px solid var(--surface-accent);
   padding: 2px;
-  height: 100%;
 }
 
 th,
@@ -114,7 +122,7 @@ dialog::backdrop {
   background: var(--shadow);
 }
 
-input:not([type=checkbox]) {
+input:not([type=checkbox]):not([type=radio]) {
   all: unset;
   box-sizing: border-box;
   width: 100%;
@@ -235,4 +243,13 @@ button.rightHover:hover {
 
 .notification.fading {
   opacity: 0;
+}
+
+.editable-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: .5em;
+  pointer-events: none;
+  color: var(--text);
 }
