@@ -182,6 +182,10 @@ button {
   user-select: none;
 }
 
+button:focus {
+  outline: none;
+}
+
 button:hover {
   box-shadow: 2px 2px var(--shadow);
   background-color: var(--surface-dark);

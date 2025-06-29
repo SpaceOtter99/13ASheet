@@ -2,7 +2,7 @@
   <thead>
     <tr>
       {% for stat in STATS %}
-        <th>{{ stat }}</th>
+      <th>{{ stat }}</th>
       {% endfor %}
     </tr>
   </thead>
@@ -10,75 +10,98 @@
 
     <tr>
       {% for stat in STATS %}
-        <td>
-          <p class="over">Base {{stat}}</p>
-          <input
-            type="number" min="0"
-            id="{{ stat }}-base"
-            data-section="stats"
-            data-key="{{ stat }}-base"
-            value="{{ character['stats'][stat]['base'] }}"
-          >
-        </td>
+      <td>
+        <p class="over">Base {{stat}}</p>
+        <input type="number" min="0" id="{{ stat }}-base" data-section="stats" data-key="{{ stat }}-base"
+          value="{{ character['stats'][stat]['base'] }}">
+      </td>
       {% endfor %}
     </tr>
 
     <tr>
       {% for stat in STATS %}
-        {% set base = character['stats'][stat]['base']|int %}
-        {% set raw = ((base - 10) // 2) %}
-        <td>
+      {% set base = character['stats'][stat]['base']|int %}
+      {% set raw = ((base - 10) // 2) %}
+      <td>
         <p class="over">Modifiers</p>
-        <p 
-          id="{{ stat }}-mod"
-          data-section="stats"
-          data-key="{{ stat }}-mod"
-          type="number"
-        >
+        <p id="{{ stat }}-mod" data-section="stats" data-key="{{ stat }}-mod" type="number">
           {{ '+' ~ raw if raw > 0 else raw }}
         </p>
-        </td>
+      </td>
       {% endfor %}
     </tr>
 
     {% set lvl = character['basic']['level']|int %}
     <tr>
       {% for stat in STATS %}
-        {% set base = character['stats'][stat]['base']|int %}
-        {% set raw = ((base - 10) // 2) %}
-        {% set tot = raw + lvl %}
-        <td>
-          <p 
-          class="final"
-          id="{{ stat }}-level"
-          data-section="stats"
-          data-key="{{ stat }}-level"
-          type="number"
-          >
-            {{ '+' ~ tot if tot > 0 else tot }}
-          </p>
-          <button class="rightHover" onclick="openRollDialog({{ tot }}, '{{stat}}')">
-            <i class="fa fa-dice-d20"></i>
-          </button>
-        </td>
+      {% set base = character['stats'][stat]['base']|int %}
+      {% set raw = ((base - 10) // 2) %}
+      {% set tot = raw + lvl %}
+      <td class="editable-stat">
+        <p class="final" id="{{ stat }}-level" data-section="stats" data-key="{{ stat }}-level" type="number">
+          {{ '+' ~ tot if tot > 0 else tot }}
+        </p>
+        <i class="fa fa-dice-d20 bg-icon" aria-hidden="true"></i>
+      </td>
       {% endfor %}
     </tr>
   </tbody>
 </table>
 
-<script>
-
-  // Recalculate modifiers & levels
-  function updateStats() {
-    var lvl = parseInt(levelInput.value, 10) || 0;
-    baseInputs.forEach(function (input) {
-      var stat    = input.getAttribute('data-key').split("-")[0];
-      var baseVal = parseInt(input.value, 10) || 0;
-      var raw     = Math.floor((baseVal - 10) / 2);
-      var total   = raw + lvl;
-
-      document.getElementById(stat + '-mod').textContent   = raw  >= 0 ? '+' + raw  : raw;
-      document.getElementById(stat + '-level').textContent = total >= 0 ? '+' + total : total;
-    });
+<style>
+  .editable-stat {
+    position: relative;
+    cursor: pointer;
   }
+
+  .editable-stat .final {
+    position: relative;
+    z-index: 1;
+  }
+
+  .editable-stat .bg-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--surface-accent);
+    font-size: 1.5rem;
+    pointer-events: none;
+    z-index: 0;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const levelInput = document.getElementById('level');
+    const baseInputs = Array.from(
+      document.querySelectorAll('input[data-section="stats"][data-key$="-base"]')
+    );
+
+    function updateStats() {
+      const lvl = parseInt(levelInput.value, 10) || 0;
+      baseInputs.forEach(input => {
+        const stat = input.dataset.key.split('-')[0];
+        const baseVal = parseInt(input.value, 10) || 0;
+        const raw = Math.floor((baseVal - 10) / 2);
+        const total = raw + lvl;
+
+        document.getElementById(stat + '-mod').textContent = raw >= 0 ? '+' + raw : raw;
+        document.getElementById(stat + '-level').textContent = total >= 0 ? '+' + total : total;
+      });
+    }
+
+    levelInput.addEventListener('input', updateStats);
+    baseInputs.forEach(input => input.addEventListener('input', updateStats));
+    updateStats();
+
+    document.querySelectorAll('td.editable-stat').forEach(td => {
+      td.addEventListener('click', () => {
+        const finalP = td.querySelector('.final');
+        const txt = finalP ? finalP.textContent : '0';
+        const tot = parseInt(txt.replace('+', ''), 10) || 0;
+        openRollDialog(tot, td.dataset.stat);
+      });
+    });
+  });
 </script>
