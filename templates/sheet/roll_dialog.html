@@ -1,0 +1,151 @@
+<dialog id="roll-dialog" class="roll-dialog">
+  <div class="dialog-grid">
+    <div id="dialog-title" class="dialog-title">Title</div>
+    <div id="roll-display" class="dice-display">…</div>
+    <div id="result-box-div" > 
+      <div id="result-box">…</div> 
+      <p class="over">Total</p>
+    </div>
+    <button id="dialog-roll"  class="dialog-button">Reroll</button>
+    <button id="dialog-close" class="dialog-button">Close</button>
+  </div>
+</dialog>
+
+<style>
+.roll-dialog {
+  padding: 1rem;
+}
+
+.roll-dialog .dialog-grid {
+  display: grid;
+  gap: 0 1rem;
+  grid-template-areas:
+    "title   title"
+    "gap1 gap1"
+    "display display"
+    "result  result"
+    "gap2 gap2"
+    "reroll  close";
+  grid-template-rows: 1rem 1rem 6rem 2rem 1rem 1.5rem;
+  background: var(--surface);
+}
+
+.dialog-title {
+  grid-area: title;
+  font-weight: bold;
+  text-align: center;
+  color: var(--text);
+}
+
+#roll-display {
+  grid-area: display;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--surface-accent);
+  overflow: hidden;
+  text-shadow: 2px 0    var(--surface),
+               -2px 0   var(--surface),
+                0   2px var(--surface),
+                0  -2px var(--surface),
+                1px 1px var(--surface),
+               -1px -1px var(--surface),
+                1px -1px var(--surface),
+               -1px 1px var(--surface);
+}
+
+#roll-display::before {
+  content: "\f6cf"; /* fa-dice-d20 */
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 5rem;
+  color: var(--surface-accent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+#roll-display,
+#roll-display span {
+  z-index: 1;
+  position: relative;
+}
+
+#result-box-div {
+  grid-area: result;
+  position: relative;
+  width: 100%;
+}
+
+#result-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  border: 1px solid var(--surface-accent);
+  height: 100%;
+  width: 100%;
+}
+
+#dialog-roll { grid-area: reroll; }
+#dialog-close { grid-area: close; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const dialog    = document.getElementById('roll-dialog');
+  const titleEl   = document.getElementById('dialog-title');
+  const display   = document.getElementById('roll-display');
+  const resultBox = document.getElementById('result-box');
+  const rollBtn   = document.getElementById('dialog-roll');
+  const closeBtn  = document.getElementById('dialog-close');
+  let currentStatLevel = 0;
+
+  const randomBetween = (min, max) =>
+    Math.floor(Math.random() * (max - min + 1)) + min;
+
+  const animateRoll = () => {
+    const duration = 750;
+    const interval = 25;
+    const steps    = Math.floor(duration / interval);
+    let count = 0;
+
+    const roll = randomBetween(1, 20);
+    const sum  = roll + currentStatLevel;
+
+    resultBox.textContent = '…';
+
+    const iv = setInterval(() => {
+      display.textContent = randomBetween(1, 20);
+      if (++count >= steps) {
+        clearInterval(iv);
+        display.textContent   = roll;
+        resultBox.textContent = sum;
+      }
+    }, interval);
+  };
+
+  window.openRollDialog = (statLevel, title) => {
+    currentStatLevel = statLevel;
+    if (title) {
+      titleEl.textContent = title;
+    } else {
+      titleEl.textContent = "Roll";
+    }
+    animateRoll();
+    dialog.showModal();
+  };
+
+  rollBtn.addEventListener('click', animateRoll);
+  closeBtn.addEventListener('click', () => dialog.close());
+});
+</script>

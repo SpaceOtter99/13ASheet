@@ -1,0 +1,49 @@
+<table style="width: 100%;" data-iterable>
+<thead>
+<tr>
+<td colspan="3"><h2>Powers / Spells</h2></td>
+</tr>
+  <tr>
+    <th>
+      Lvl
+    </th>
+    <th>
+      Name
+    </th>
+    <th>
+      Description
+    </th>
+  </tr>
+</thead>
+{% set list = character.powers | default([{}], true) %}
+{% set all = list + [{}] %}
+{% for power in all %}
+  <tr iterable-section>
+    <td style="width: 1.5rem">
+        <input
+          type="number"
+          data-section="powers"
+          data-key="{{ loop.index0 }}-level"
+          value="{{ power.level }}"
+        >
+    </td>
+    <td style="width: 15rem">
+        <input
+          type="text"
+          data-section="powers"
+          data-key="{{ loop.index0 }}-name"
+          value="{{ power.name }}"
+        >
+    </td>
+    <td>
+      <div class="container inline">
+        <textarea
+          class="autoresizing"
+          data-section="powers"
+          data-key="{{ loop.index0 }}-notes"
+        >{{ power.notes }}</textarea>
+      </div>
+    </td>
+  </tr>
+{% endfor %}
+</table>

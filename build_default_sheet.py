@@ -7,7 +7,6 @@ from collections import defaultdict
 from bs4 import BeautifulSoup
 from jinja2 import Environment, FileSystemLoader
 
-# your project’s STATS / DEFENCES constants
 from data import STATS, DEFENCES
 
 # ─── Auto-attr + auto-dict class ────────────────────────────────────────────
@@ -111,20 +110,44 @@ def main():
         tags = soup.find_all(attrs={"data-section": True, "data-key": True})
         print(f"Parsing {len(tags)} tags from {rel}")
 
-        for tag in tags:
-            sec = tag["data-section"]
-            key = tag["data-key"]
-            default = 0 if tag.get("type") == "number" else ""
+        tags = soup.find_all(attrs={"data-section": True, "data-key": True})
+        print(f"Parsing {len(tags)} tags from {rel}")
 
-            parts = key.split("-", 1)
-            outer = parts[0]
-            if len(parts) > 1:
-                inner = parts[1]
-                if default == 0 and inner == "base":
-                    default = 10
-                sheet[sec][outer][inner] = default
+        for tag in tags:
+            sec     = tag["data-section"]
+            raw_key = tag["data-key"]            # e.g. "foo" or "0-name"
+            default = 0 if tag.get("type")=="number" else ""
+
+            # true if anywhere above has data-iterable
+            is_iter = bool(tag.find_parent(lambda t: t.has_attr("data-iterable")))
+
+            if is_iter:
+                # make sure sheet[sec] is a list
+                arr = sheet[sec]
+                if not isinstance(arr, list):
+                    sheet[sec] = arr = []
+
+                # split index + field
+                idx_str, field = raw_key.split("-", 1)
+                idx = int(idx_str)
+
+                # grow list as needed
+                while len(arr) <= idx:
+                    arr.append({})
+
+                # assign default
+                arr[idx][field] = default
+
             else:
-                sheet[sec][outer] = default
+                # non-iterable: your existing nested dict logic
+                parts = raw_key.split("-", 1)
+                if len(parts) == 2:
+                    outer, inner = parts
+                    if default == 0 and inner == "base":
+                        default = 10
+                    sheet[sec][outer][inner] = default
+                else:
+                    sheet[sec][raw_key] = default
 
     # Turn our autovivifying defaultdict into a plain nested dict
     normal = dictify(sheet)

@@ -11,7 +11,7 @@
       "bonus": 0,
       "final": 0,
       "mod": 0,
-      "stat": 0,
+      "stat": "",
       "statlist": "DEX,CON,WIS"
     },
     "MD": {
@@ -19,7 +19,7 @@
       "bonus": 0,
       "final": 0,
       "mod": 0,
-      "stat": 0,
+      "stat": "",
       "statlist": "INT,WIS,CHA"
     },
     "PD": {
@@ -27,10 +27,17 @@
       "bonus": 0,
       "final": 0,
       "mod": 0,
-      "stat": 0,
+      "stat": "",
       "statlist": "STR,DEX,CON"
     }
   },
+  "powers": [
+    {
+      "level": 0,
+      "name": "",
+      "notes": ""
+    }
+  ],
   "stats": {
     "CHA": {
       "base": 10,

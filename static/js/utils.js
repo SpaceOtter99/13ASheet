@@ -19,3 +19,49 @@ function generateUUID() {
     hex.substring(20)
   );
 }
+
+let textareas;
+
+function autoResize() {
+  this.rows = 1;
+  this.style.height = 'auto';
+  this.style.height = this.scrollHeight + 'px';
+}
+
+function autoResizeAll() {
+    console.log("Resizing");
+    textareas.forEach(textarea => autoResize.call(textarea));
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  textareas = document.querySelectorAll(".autoresizing");
+
+  textareas.forEach(textarea => {
+    textarea.addEventListener('input', autoResize, false);
+    autoResize.call(textarea);
+  });
+
+  window.addEventListener('resize', autoResizeAll);
+});
+
+function addNotification(text) {
+  const container = document.getElementById('notification-container');
+  if (!container) return;
+
+  const note = document.createElement('div');
+  note.className = 'notification';
+  note.textContent = text;
+
+  container.appendChild(note);
+
+  setTimeout(() => {
+    note.classList.add('fading');
+  }, 2500);
+
+  setTimeout(() => {
+    if (note.parentNode === container) {
+      container.removeChild(note);
+    }
+  }, 3000);
+}

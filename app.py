@@ -81,23 +81,46 @@ def create_app():
 
     @app.route('/sheets/<id>/update', methods=['POST'])
     def update_character(id):
-        data = load_data()
+        data      = load_data()
         character = data.sheets.get(id)
         if not character:
             return jsonify({'error': 'Sheet not found'}), 404
 
         payload = request.get_json().get('updates', {}) or {}
+
         for section, entries in payload.items():
-            sec = character.setdefault(section, {})
-            for data_key, value in entries.items():
-                parts = data_key.split('-', 1)
-                outer_key = parts[0]
-                if len(parts) > 1:
-                    inner_key = parts[1]
-                    bucket = sec.setdefault(outer_key, {})
-                    bucket[inner_key] = value
-                else:
-                    sec[outer_key] = value
+            if isinstance(entries, list):
+                lst = character.setdefault(section, [])
+                if not isinstance(lst, list):
+                    lst = []
+                    character[section] = lst
+
+                for idx, fields in enumerate(entries):
+                    if not isinstance(fields, dict):
+                        continue
+                    while len(lst) <= idx:
+                        lst.append({})
+                    for field, val in fields.items():
+                        lst[idx][field] = val
+
+            else:
+                sec = character.setdefault(section, {})
+                for data_key, value in entries.items():
+                    parts = data_key.split('-', 1)
+                    if len(parts) > 1:
+                        outer, inner = parts
+                        bucket = sec.setdefault(outer, {})
+                        bucket[inner] = value
+                    else:
+                        sec[parts[0]] = value
+
+        for section, lst in list(character.items()):
+          if isinstance(lst, list):
+              cleaned = []
+              for entry in lst:
+                  if any(str(v).replace("0","").strip() for v in entry.values()):
+                      cleaned.append(entry)
+              character[section] = cleaned
 
         data.sheets[id] = character
         resp = jsonify({'status': 'ok'})

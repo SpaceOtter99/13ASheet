@@ -1,36 +1,43 @@
 {% extends 'base.html' %}
 {% block title %}{{ character.name }}{% endblock %}
 {% block content %}
-  <body>
 
-    <div class="container">
-      {% include 'sheet/info.html' %}
-    </div>
+<body>
 
-    <div class="container">
-      <div style="flex-grow: 14"> {% include 'sheet/stats.html' %} </div>
-      <div style="flex-grow: 9"> {% include 'sheet/defence.html' %} </div>
-    </div>
-    
-    <script>
+  <div class="container">
+    {% include 'sheet/info.html' %}
+  </div>
+
+  <div class="container">
+    <div style="flex-grow: 14"> {% include 'sheet/stats.html' %} </div>
+    <div style="flex-grow: 9"> {% include 'sheet/defence.html' %} </div>
+  </div>
+
+  <div class="container">
+    {% include 'sheet/powers.html' %}
+  </div>
+
+  {% include 'sheet/roll_dialog.html' %}
+
+  <script>
     document.addEventListener('DOMContentLoaded', () => {
       const name = "{{ character.name }}";
       let timer, updated = {};
 
-      function doSave(opts={}) {
+      function doSave(opts = {}) {
         console.log("Saving with data", updated)
         fetch(`{{ url_for('update_character', id=request.view_args.id) }}`, {
           method: 'POST',
-          headers: { 'Content-Type':'application/json' },
+          headers: { 'Content-Type': 'application/json' },
           keepalive: opts.keepalive,
           body: JSON.stringify({ updates: updated })
         })
-        .then(r => r.json())
-        .then(j => {
-          if (j.status==='ok') fetchLatestData();
-          else console.warn('Save failed', j);
-        })
-        .catch(err => console.error(err));
+          .then(r => r.json())
+          .then(j => {
+            if (j.status === 'ok') fetchLatestData();
+            else console.warn('Save failed', j);
+          })
+          .catch(err => console.error(err));
       }
 
       function scheduleSave() {
@@ -41,7 +48,7 @@
       function flushSave() {
         if (timer) {
           clearTimeout(timer);
-          doSave({ keepalive:true });
+          doSave({ keepalive: true });
           timer = null;
         }
       }
@@ -51,33 +58,166 @@
           .then(r => r.json())
           .then(data => {
             Object.entries(data).forEach(([section, payload]) => {
-              Object.entries(payload).forEach(([key, value]) => {
-                document
-                  .querySelectorAll(`[data-section="${section}"][data-key="${key}"]`)
-                  .forEach(el => {
-                    if (el.tagName === 'INPUT') {
-                      if (document.activeElement !== el) el.value = value;
-                    } else {
-                      el.textContent = value;
-                    }
+              if (Array.isArray(payload)) {
+                const container = document.querySelector(
+                  `[data-iterable]`
+                );
+                if (!container) return;
+
+                container
+                  .querySelectorAll('[iterable-section]')
+                  .forEach(row => {
+                    const keyEl = row.querySelector(
+                      `[data-section="${section}"][data-key]`
+                    );
+                    if (!keyEl) return;
+                    const idx = parseInt(keyEl.dataset.key.split('-', 1)[0], 10);
+                    if (idx >= payload.length) row.remove();
                   });
-              });
+
+                payload.forEach((item, idx) => {
+                  Object.entries(item).forEach(([field, val]) => {
+                    container
+                      .querySelectorAll(
+                        `[data-section="${section}"][data-key="${idx}-${field}"]`
+                      )
+                      .forEach(el => {
+                        if (el.tagName === 'INPUT' || el.tagName == "TEXTAREA") {
+                          el.value = val;
+                        } else {
+                          el.textContent = val;
+                        }
+                      });
+                  });
+                });
+
+                const blankIdx = payload.length;
+                let blankEls = container.querySelectorAll(
+                  `[data-section="${section}"][data-key^="${blankIdx}-"]`
+                );
+
+                if (blankEls.length === 0) {
+                  const prevIdx = blankIdx - 1;
+                  const prevEl = container.querySelector(
+                    `[data-section="${section}"][data-key^="${prevIdx}-"]`
+                  );
+                  if (prevEl) {
+                    let row = prevEl;
+                    while (!row.hasAttribute("iterable-section")) {
+                      row = row.parentNode;
+                    }
+                    const newRow = row.cloneNode(true);
+
+                    const newRowEls = newRow.querySelectorAll('[data-key]');
+                    newRowEls.forEach(el => {
+                      const [_, field] = el.dataset.key.split('-', 2);
+                      el.dataset.key = `${blankIdx}-${field}`;
+                      if (el.tagName === 'INPUT' || el.tagName === "TEXTAREA") el.value = '';
+                      else el.textContent = '';
+                      if (el.tagName == "TEXTAREA") el.style.removeProperty("height");
+                    });
+
+                    newRow
+                      .querySelectorAll('[data-section][data-key]')
+                      .forEach(el => el.addEventListener('input', onDataInput));
+
+                    container.appendChild(newRow);
+
+                    blankEls = container.querySelectorAll(
+                      `[data-section="${section}"][data-key^="${blankIdx}-"]`
+                    );
+                  }
+                }
+
+                blankEls.forEach(el => {
+                  if (el.tagName === 'INPUT' || el.tagName == "TEXTAREA") {
+                    el.value = '';
+                  } else {
+                    el.textContent = '';
+                  }
+                });
+
+              } else {
+                Object.entries(payload).forEach(([key, value]) => {
+                  document
+                    .querySelectorAll(
+                      `[data-section="${section}"][data-key="${key}"]`
+                    )
+                    .forEach(el => {
+                      if (el.tagName === 'INPUT' || el.tagName == "TEXTAREA") {
+                        el.value = value;
+                      } else {
+                        el.textContent = value;
+                      }
+                    });
+                });
+              }
             });
+
             updated = {};
           })
           .catch(err => console.error(err));
       }
 
+      const debounceMap = new Map();
+      const skipChange = new WeakMap();
+
+      function onDataInput() {
+
+        if (skipChange.get(this)) {
+          skipChange.delete(this);
+          return;
+        }
+
+        addNotification("Saved!");
+        clearTimeout(debounceMap.get(this));
+
+        const section = this.dataset.section;
+        const rawKey = this.dataset.key;
+        const val = this.type === 'number'
+          ? (parseInt(this.value, 10) || 0)
+          : this.value;
+
+        const isIterable = !!this.closest('[data-iterable]');
+
+        if (isIterable) {
+          updated[section] = updated[section] || [];
+          const [idxStr, field] = rawKey.split('-', 2);
+          const idx = parseInt(idxStr, 10);
+
+          if (!updated[section][idx]) {
+            updated[section][idx] = {};
+          }
+          updated[section][idx][field] = val;
+
+        } else {
+          updated[section] = updated[section] || {};
+          updated[section][rawKey] = val;
+        }
+
+        scheduleSave();
+      }
+
+      function onDataInputDebounced(event) {
+        if (debounceMap.has(this)) {
+          clearTimeout(debounceMap.get(this));
+        }
+
+        const timer = setTimeout(() => {
+          onDataInput.call(this);
+          skipChange.set(this, true);
+          debounceMap.delete(this);
+        }, 3000);
+
+        debounceMap.set(this, timer);
+      }
+
       const inputs = document.querySelectorAll('[data-section][data-key]');
       console.log('Found', inputs.length, 'elements with data-section & data-key');
+
       inputs.forEach(input => {
-        input.addEventListener('input', function() {
-          const sec = this.dataset.section;
-          const key = this.dataset.key;
-          updated[sec] = updated[sec] || {};
-          updated[sec][key] = parseInt(this.value, 10) || this.value;
-          scheduleSave();
-        });
+        input.addEventListener('change', onDataInput);
+        input.addEventListener('input', onDataInputDebounced);
       });
 
       window.addEventListener('beforeunload', flushSave);
@@ -85,7 +225,7 @@
         if (document.visibilityState === 'hidden') flushSave();
       });
     });
-    </script>
+  </script>
 
-  </body>
+</body>
 {% endblock %}

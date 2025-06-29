@@ -1,8 +1,13 @@
 :root {
   --bg: #eee;
+
   --surface: #fff;
   --surface-accent: #ddd;
   --surface-dark: #333;
+
+  --primary: #5e8359;
+
+  --shadow: rgba(0, 0, 0, 0.5);
 
   --text: var(--surface-dark);
   --text-editable: #111;
@@ -16,7 +21,8 @@ body {
   background: var(--bg);
 }
 
-header, footer {
+header,
+footer {
   background: var(--surface-dark);
   color: var(--text-dark);
   padding: 0.5rem 1rem;
@@ -32,7 +38,13 @@ main {
   padding: 1rem;
   margin: 1rem auto;
   max-width: 900px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px .25rem var(--shadow);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
 }
 
 p {
@@ -44,6 +56,17 @@ p.final {
   line-height: 1.28;
 }
 
+dialog p {
+  text-align: center;
+}
+
+textarea.autoresizing {
+  all: unset;
+  width: 100%;
+  resize: none;
+  text-align: left;
+}
+
 .over {
   height: 9px;
   font-size: 9px;
@@ -51,6 +74,7 @@ p.final {
   bottom: 0px;
   left: 0;
   right: 0;
+  user-select: none;
   pointer-events: none;
   text-align: center;
 }
@@ -58,15 +82,18 @@ p.final {
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 1rem;
 }
 
-th, td, .bordered {
+th,
+td,
+.bordered {
   border: 1px solid var(--surface-accent);
   padding: 2px;
+  height: 100%;
 }
 
-th, td {
+th,
+td {
   position: relative;
   text-align: center;
   font-style: italic;
@@ -78,8 +105,13 @@ a {
   color: #0066cc;
   text-decoration: none;
 }
+
 a:hover {
   text-decoration: underline;
+}
+
+dialog::backdrop {
+  background: var(--shadow);
 }
 
 input:not([type=checkbox]) {
@@ -87,11 +119,9 @@ input:not([type=checkbox]) {
   box-sizing: border-box;
   width: 100%;
   height: 100%;
-  align-self: stretch;
   color: var(--text-editable);
   font-style: normal;
   text-align: center;
-  padding: 0 .25rem;
 }
 
 /* Input spinner removal */
@@ -100,12 +130,13 @@ input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 input[type=number] {
   -moz-appearance: textfield;
 }
 
 input[type="checkbox"] {
-    vertical-align:middle;
+  vertical-align: middle;
 }
 
 label {
@@ -146,21 +177,22 @@ button {
   color: var(--text);
   background-color: var(--surface);
   border: 1px solid var(--surface-accent);
-  box-shadow: 1px 1px var(--surface-dark);
+  box-shadow: 1px 1px var(--shadow);
   cursor: pointer;
+  user-select: none;
 }
 
 button:hover {
-  box-shadow: 2px 2px var(--surface-dark);
+  box-shadow: 2px 2px var(--shadow);
   background-color: var(--surface-dark);
   color: var(--text-dark)
 }
 
 button.rightHover {
   position: absolute;
-  right: 4px;
-  bottom: 4px;
-  top: 4px;
+  right: .125rem;
+  bottom: .25rem;
+  top: .25rem;
   width: 1.5rem;
   text-align: center;
   padding: 0;
@@ -171,4 +203,32 @@ button.rightHover {
 
 button.rightHover:hover {
   color: var(--text-editable);
+  text-shadow: 0px 2px var(--shadow);
+}
+
+#notification-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.notification {
+  background-color: var(--primary);
+  color: var(--text-dark);
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  font-family: sans-serif;
+  box-shadow: 0 2px 6px var(--shadow);
+  opacity: 1;
+  transition: opacity 0.5s ease;
+  pointer-events: all;
+}
+
+.notification.fading {
+  opacity: 0;
 }

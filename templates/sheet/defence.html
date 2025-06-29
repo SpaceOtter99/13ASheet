@@ -2,7 +2,7 @@
   <thead>
     <tr>
       {% for defence in DEFENCES %}
-        <th>{{ defence }}</th>
+      <th>{{ defence }}</th>
       {% endfor %}
     </tr>
   </thead>
@@ -12,13 +12,8 @@
       <td>
         <p class="over">Base {{ defence }}</p>
         <div>
-          <input
-            type="number" min="0"
-            id="{{ defence }}-base"
-            data-section="defences"
-            data-key="{{ defence }}-base"
-            value="{{ character.defences[defence].base }}"
-          >
+          <input type="number" min="0" id="{{ defence }}-base" data-section="defences" data-key="{{ defence }}-base"
+            value="{{ character.defences[defence].base }}">
         </div>
       </td>
       {% endfor %}
@@ -28,25 +23,12 @@
       {% for defence in DEFENCES %}
       <td>
         <p class="over">Modifiers</p>
-            <p
-              id="{{ defence }}-mod"
-              data-section="defences"
-              data-key="{{ defence }}-mod"
-              type="number"
-            ></p>
-            <button
-              type="button"
-              class="edit-statlist-btn rightHover"
-              data-defence="{{ defence }}"
-            ><i class="fa fa-gear"></i></button>
+        <p id="{{ defence }}-mod" data-section="defences" data-key="{{ defence }}-mod" type="number"></p>
+        <button type="button" class="edit-statlist-btn rightHover" data-defence="{{ defence }}"><i
+            class="fa fa-gear"></i></button>
 
-          <input
-            type="hidden"
-            id="{{ defence }}-statlist"
-            data-section="defences"
-            data-key="{{ defence }}-statlist"
-            value="{{ character.defences[defence].statlist }}"
-          >
+        <input type="hidden" id="{{ defence }}-statlist" data-section="defences" data-key="{{ defence }}-statlist"
+          value="{{ character.defences[defence].statlist }}">
       </td>
       {% endfor %}
     </tr>
@@ -54,12 +36,8 @@
     <tr>
       {% for defence in DEFENCES %}
       <td>
-        <p
-          id="{{ defence }}-def"
-          data-section="defences"
-          data-key="{{ defence }}-final"
-          type="number"
-        ></p>
+        <p class="final" id="{{ defence }}-def" data-section="defences" data-key="{{ defence }}-final" type="number">
+        </p>
       </td>
       {% endfor %}
     </tr>
@@ -71,32 +49,30 @@
   <form method="dialog">
     <p>Select stats for <strong>{{ defence }}</strong>:</p>
     <div class="stat-grid">
-    {% for stat in STATS %}
+      {% for stat in STATS %}
       <div>
-        <input
-          type="checkbox"
-          id="{{defence}}-{{stat}}-checkbox"
-          name="stat"
-          value="{{ stat }}"
-          {% if stat in character.defences[defence].statlist %}checked{% endif %}
-        > 
+        <input type="checkbox" id="{{defence}}-{{stat}}-checkbox" name="stat" value="{{ stat }}" {% if stat in
+          character.defences[defence].statlist %}checked{% endif %}>
         <label for="{{defence}}-{{stat}}-checkbox">
           {{ stat }}
         </label>
       </div>
-    {% endfor %}
+      {% endfor %}
+      <div style="grid-column: 1 / span 3">
+        <p class="over"> Chosen Stat </p>
+        <p type="text" min="0" id="{{ defence }}-stat" data-section="defences" data-key="{{ defence }}-stat">
+          {{ character.defences[defence].stat }}
+        </p>
+      </div>
       <div style="grid-column: 1 / span 3">
         <p class="over"> Bonus {{ defence }}</p>
-        <input
-          type="number" min="0"
-          id="{{ defence }}-bonus"
-          data-section="defences"
-          data-key="{{ defence }}-bonus"
-          value="{{ character.defences[defence].bonus }}"
-        >
+        <input type="number" min="0" id="{{ defence }}-bonus" data-section="defences" data-key="{{ defence }}-bonus"
+          value="{{ character.defences[defence].bonus }}">
       </div>
-      <button value="cancel">Cancel</button>
-      <button id="{{ defence }}-dialog-ok" value="default">OK</button>
+      <div class="container inline" style="grid-column: 1 / span 3; padding: 0; border: none;">
+        <button value="cancel">Cancel</button>
+        <button id="{{ defence }}-dialog-ok" value="default">OK</button>
+      </div>
     </div>
   </form>
 </dialog>
@@ -106,7 +82,7 @@
   .stat-grid {
     display: grid;
     grid-template-columns: repeat(3, 5rem);
-    grid-template-rows: repeat(3, 2rem) 1.5rem;
+    grid-template-rows: repeat(4, 2rem) 1.5rem;
     gap: 0.5em;
   }
 
@@ -117,46 +93,67 @@
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const levelInput = document.getElementById('level');
-  const STATS      = {{ STATS|tojson }};
-  const DEFENCES   = {{ DEFENCES|tojson }};
+  document.addEventListener('DOMContentLoaded', () => {
+    const levelInput = document.getElementById('level');
+    const STATS = {{ STATS| tojson
+  }};
+  const DEFENCES = {{ DEFENCES| tojson }};
 
   // utility to get current stat-level from the stats table
   function getStatLevel(stat) {
-    console.log(stat)
     const txt = document.getElementById(stat + '-level').textContent;
-    return parseInt(txt.replace('+',''), 10) || 0;
+    return parseInt(txt.replace('+', ''), 10) || 0;
   }
 
   // median of an array of numbers
   function median(arr) {
     if (!arr.length) return 0;
-    arr = arr.slice().sort((a,b)=>a-b);
-    return arr[Math.floor((arr.length-1)/2)];
+    arr = arr.slice().sort((a, b) => a - b);
+    return arr[Math.floor((arr.length - 1) / 2)];
   }
 
   // recalculates all defences
   function updateDefences() {
-
     DEFENCES.forEach(def => {
-      const baseEl  = document.getElementById(def + '-base');
+      const baseEl = document.getElementById(def + '-base');
       const bonusEl = document.getElementById(def + '-bonus');
       const statlistEl = document.getElementById(def + '-statlist');
-      const modEl   = document.getElementById(def + '-mod');
-      const defEl   = document.getElementById(def + '-def');
+      const modEl = document.getElementById(def + '-mod');
+      const defEl = document.getElementById(def + '-def');
+      const nameEl = document.getElementById(def + '-stat');
 
-      const baseVal  = parseInt(baseEl.value, 10) || 0;
+      const baseVal = parseInt(baseEl.value, 10) || 0;
       const bonusVal = parseInt(bonusEl.value, 10) || 0;
-      const stats    = statlistEl.value
-                        .split(',')
-                        .filter(s=>s)
-                        .map(s=> getStatLevel(s) );
-      const defenceStat = median(stats);
-      const modVal  = defenceStat + bonusVal;
-      const finalVal= baseVal + modVal;
 
-      modEl.textContent = (modVal>=0? '+'+modVal: modVal);
+      // 1) get the chosen stat names
+      const statNames = statlistEl.value
+        .split(',')
+        .filter(s => s);
+
+      // 2) map to { stat, val }
+      const pairs = statNames.map(s => ({
+        stat: s,
+        val: getStatLevel(s)
+      }));
+
+      // 3) pick the median pair
+      let medianPair = { stat: '', val: 0 };
+      if (pairs.length) {
+        pairs.sort((a, b) => a.val - b.val);
+        const mid = Math.floor((pairs.length - 1) / 2);
+        medianPair = pairs[mid];
+      }
+
+      const defenceStatVal = medianPair.val;
+      const defenceStatName = medianPair.stat;
+
+      // 4) now compute modifiers & final
+      const modVal = defenceStatVal + bonusVal;
+      const finalVal = baseVal + modVal;
+
+      // 5) write out everything
+      nameEl.textContent = defenceStatName || '—';
+      modEl.textContent = (modVal >= 0 ? '+' + modVal : modVal);
       defEl.textContent = finalVal;
     });
   }
@@ -165,35 +162,54 @@ document.addEventListener('DOMContentLoaded', () => {
   levelInput.addEventListener('input', updateDefences);
   DEFENCES.forEach(def => {
     document.getElementById(def + '-base')
-            .addEventListener('input', updateDefences);
+      .addEventListener('input', updateDefences);
     document.getElementById(def + '-bonus')
-            .addEventListener('input', updateDefences);
+      .addEventListener('input', updateDefences);
   });
   STATS.forEach(stat => {
     document.getElementById(stat + '-base')
-            .addEventListener('input', updateDefences);
+      .addEventListener('input', updateDefences);
+    DEFENCES.forEach(def => {
+      document.getElementById(def + "-" + stat + "-checkbox")
+        .addEventListener('change', updateDefences);
+    })
   });
 
-  // wire up each “Edit…” button + its dialog
   DEFENCES.forEach(def => {
-    const btn    = document.querySelector(`button.edit-statlist-btn[data-defence="${def}"]`);
-    const dialog = document.getElementById(def + '-dialog');
-    const hidden = document.getElementById(def + '-statlist');
-    const okBtn  = document.getElementById(def + '-dialog-ok');
+    const dialog = document.getElementById(`${def}-dialog`);
+    const hidden = document.getElementById(`${def}-statlist`);
+    const okBtn = document.getElementById(`${def}-dialog-ok`);
+    const bonusInput = document.getElementById(`${def}-bonus`);
+    const checkboxes = Array.from(
+      dialog.querySelectorAll('input[name="stat"]')
+    );
 
-    btn.addEventListener('click', () => dialog.showModal());
+    const btn = document.querySelector(`button.edit-statlist-btn[data-defence="${def}"]`);
+    btn.addEventListener('click', () => {
+      syncAndRecalc();
+      dialog.showModal();
+    });
 
-    okBtn.addEventListener('click', () => {
-      const checked = Array.from(dialog.querySelectorAll('input[name="stat"]:checked'))
-                           .map(cb=>cb.value);
+    function syncAndRecalc() {
+      const checked = checkboxes
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
       hidden.value = checked.join(',');
       hidden.dispatchEvent(new Event('input', { bubbles: true }));
-      dialog.close();
       updateDefences();
+    }
+
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', syncAndRecalc);
+    });
+
+    bonusInput.addEventListener('input', syncAndRecalc);
+
+    okBtn.addEventListener('click', () => {
+      dialog.close();
     });
   });
 
-  // initial paint
   updateDefences();
 });
 </script>
