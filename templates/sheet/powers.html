@@ -17,18 +17,24 @@
   <tbody data-iterable>
     {% for power in all %}
     <tr iterable-section>
-      <td class="editable-uses" data-index="{{ loop.index0 }}" title="Right-click to edit" style="width: 2.8rem;">
+      <td class="editable-uses" data-index="{{ loop.index0 }}" style="width: 2.8rem;"
+        title="{{ 'Define power first' if loop.last else 'Right-click to edit' }}">
         <div class="uses-content"></div>
         <i class="fa fa-gear editable-icon" title="Right-click to edit uses"></i>
         <input type="hidden" id="uses-{{ loop.index0 }}" data-section="powers" data-key="{{ loop.index0 }}-uses"
           value="{{ power.uses|default('daily:1') }}">
+        <input type="hidden" id="uses-states-{{ loop.index0 }}" data-section="powers"
+          data-key="{{ loop.index0 }}-usesStates" value="{{ power.usesStates|default([])|join(',') }}">
       </td>
 
       <td style="width: 1.5rem">
         <input type="number" data-section="powers" data-key="{{ loop.index0 }}-level" value="{{ power.level }}">
       </td>
-      <td style="width: 15rem">
-        <input type="text" data-section="powers" data-key="{{ loop.index0 }}-name" value="{{ power.name }}">
+      <td style="width: 10rem">
+        <div class="container inline">
+          <textarea class="autoresizing" data-section="powers" style="text-align: center"
+            data-key="{{ loop.index0 }}-name">{{ power.name }}</textarea>
+        </div>
       </td>
       <td>
         <div class="container inline">
@@ -58,7 +64,7 @@
         Recharge
       </label>
       <input type="number" id="recharge-count-{{ loop.index0 }}" min="1" max="20"
-        value="{{ (power.uses|default('recharge:1')).split(':')[1]|default(1) }}">
+        value="{{ (power.uses|default('recharge:16')).split(':')[1]|default(1) }}">
 
       <label>
         <input type="radio" name="uses-type-{{ loop.index0 }}" value="perbattle">
@@ -87,21 +93,6 @@
     padding: 0;
   }
 
-  .edit-uses-icon {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    font-size: 1em;
-    pointer-events: none;
-    opacity: 0.3;
-    transition: opacity 0.2s;
-  }
-
-  .editable-uses:hover .edit-uses-icon {
-    opacity: 1;
-    cursor: context-menu;
-  }
-
   .uses-content {
     display: flex;
     flex-wrap: wrap;
@@ -125,63 +116,92 @@
   tbody[data-iterable] tr:last-child td.editable-uses i {
     display: none;
   }
+
+  tbody[data-iterable] tr:last-child td.editable-uses {
+    cursor: default;
+  }
 </style>
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-
     document.querySelectorAll('td.editable-uses').forEach(td => {
       const idx = td.dataset.index;
       const dialog = document.getElementById(`uses-dialog-${idx}`);
-      const hidden = document.getElementById(`uses-${idx}`);
+      const hiddenType = document.getElementById(`uses-${idx}`);
+      const hiddenStates = document.getElementById(`uses-states-${idx}`);
       const okBtn = document.getElementById(`uses-dialog-ok-${idx}`);
       const radios = dialog.querySelectorAll(`input[name="uses-type-${idx}"]`);
       const dailyInput = dialog.querySelector(`#daily-count-${idx}`);
       const rechargeInput = dialog.querySelector(`#recharge-count-${idx}`);
       const perbattleInput = dialog.querySelector(`#perbattle-count-${idx}`);
+      const container = td.querySelector('.uses-content');
 
-      function updateUsesCell(val) {
-        const [type, count] = val.split(':');
-        const container = td.querySelector('.uses-content');
+      function updateUsesCell(typeCount) {
+        const [type, countStr] = (typeCount || '').split(':');
+        const count = Number(countStr);
+        const states = hiddenStates.value ? hiddenStates.value.split(',') : [];
         container.innerHTML = '';
+
         if (type === 'daily') {
-          for (let i = 0; i < Number(count); i++) {
+          for (let i = 0; i < count; i++) {
             const cb = document.createElement('input');
             cb.type = 'checkbox';
+            if (states[i] === '1') cb.checked = true;
+            cb.addEventListener('change', () => {
+              const allCBs = Array.from(container.querySelectorAll('input'));
+              const newStates = allCBs.map(c => c.checked ? '1' : '0');
+              hiddenStates.value = newStates.join(',');
+              hiddenStates.dispatchEvent(new Event('change', { bubbles: true }));
+            });
             container.appendChild(cb);
           }
-        } else if (type === 'recharge') {
+        }
+        else if (type === 'recharge') {
           const cb = document.createElement('input');
           cb.type = 'checkbox';
+          if (states[0] === '1') cb.checked = true;
+          cb.addEventListener('change', () => {
+            hiddenStates.value = cb.checked ? '1' : '0';
+            hiddenStates.dispatchEvent(new Event('change', { bubbles: true }));
+          });
           container.appendChild(cb);
           const p = document.createElement('p');
           p.textContent = `${count}+`;
           p.className = 'over right';
           container.appendChild(p);
-        } else if (type === 'perbattle') {
-          for (let i = 0; i < Number(count); i++) {
+        }
+        else if (type === 'perbattle') {
+          for (let i = 0; i < count; i++) {
             const cb = document.createElement('input');
             cb.type = 'checkbox';
+            if (states[i] === '1') cb.checked = true;
+            cb.addEventListener('change', () => {
+              const allCBs = Array.from(container.querySelectorAll('input'));
+              const newStates = allCBs.map(c => c.checked ? '1' : '0');
+              hiddenStates.value = newStates.join(',');
+              hiddenStates.dispatchEvent(new Event('change', { bubbles: true }));
+            });
             container.appendChild(cb);
           }
           const p = document.createElement('p');
           p.className = 'over';
           p.textContent = 'per battle';
           container.appendChild(p);
-        } else {
+        }
+        else {
           container.textContent = 'At Will';
         }
       }
 
-      updateUsesCell(hidden.value);
+      updateUsesCell(hiddenType.value);
 
       td.addEventListener('contextmenu', e => {
         e.preventDefault();
-        const [t, c] = hidden.value.split(':');
+        const [t, c] = (hiddenType.value || '').split(':');
         radios.forEach(r => r.checked = r.value === t);
-        dailyInput.value = t === 'daily' ? c : dailyInput.value;
-        rechargeInput.value = t === 'recharge' ? c : rechargeInput.value;
-        perbattleInput.value = t === 'perbattle' ? c : perbattleInput.value;
+        dailyInput.value = (t === 'daily') ? c : 1;
+        rechargeInput.value = (t === 'recharge') ? c : 16;
+        perbattleInput.value = (t === 'perbattle') ? c : 1;
         dialog.showModal();
       });
 
@@ -191,36 +211,44 @@
         if (sel === 'daily') val += dailyInput.value;
         else if (sel === 'recharge') val += rechargeInput.value;
         else if (sel === 'perbattle') val += perbattleInput.value;
-        hidden.value = val;
+        hiddenType.value = val;
+        hiddenType.dispatchEvent(new Event('change', { bubbles: true }));
         updateUsesCell(val);
+
         const row = td.closest('tr');
-        const lvl   = row.querySelector('input[data-key$="-level"]').value;
-        const name  = row.querySelector('input[data-key$="-name"]').value.trim();
+        const lvl = row.querySelector('input[data-key$="-level"]').value;
+        const name = row.querySelector('input[data-key$="-name"]').value.trim();
         const notes = row.querySelector('textarea[data-key$="-notes"]').value.trim();
+        console.log('1', row);
         if (!lvl && !name && !notes) {
-          hidden.value = '';
-          updateUsesCell('');
+          hiddenType.value = '';
+          hiddenStates.value = '';
         }
-        hidden.dispatchEvent(new Event('change', { bubbles: true }));
+        hiddenStates.dispatchEvent(new Event('change', { bubbles: true }));
+        hiddenType.dispatchEvent(new Event('change', { bubbles: true }));
         dialog.close();
       });
     });
 
-  document.querySelectorAll('tbody[data-iterable] tr').forEach(tr => {
-    ['input[data-key$="-level"]', 'input[data-key$="-name"]', 'textarea[data-key$="-notes"]']
-      .forEach(sel => {
-        tr.querySelector(sel).addEventListener('change', () => {
-          const lvl   = tr.querySelector('input[data-key$="-level"]').value;
-          const name  = tr.querySelector('input[data-key$="-name"]').value.trim();
-          const notes = tr.querySelector('textarea[data-key$="-notes"]').value.trim();
-          if (!lvl && !name && !notes) {
-            const idx    = tr.querySelector('td.editable-uses').dataset.index;
-            const hidden = document.getElementById(`uses-${idx}`);
-            hidden.value = '';
-            tr.querySelector('td.editable-uses .uses-content').innerHTML = '';
-          }
+    document.querySelectorAll('tbody[data-iterable] tr').forEach(tr => {
+      ['input[data-key$="-level"]', 'input[data-key$="-name"]', 'textarea[data-key$="-notes"]']
+        .forEach(sel => {
+          tr.querySelector(sel).addEventListener('change', () => {
+            const lvl = tr.querySelector('input[data-key$="-level"]').value;
+            const name = tr.querySelector('input[data-key$="-name"]').value.trim();
+            const notes = tr.querySelector('textarea[data-key$="-notes"]').value.trim();
+            if (!lvl && !name && !notes) {
+              const idx = tr.querySelector('td.editable-uses').dataset.index;
+              const hiddenTypes = document.getElementById(`uses-${idx}`);
+              const hiddenStates = document.getElementById(`uses-states-${idx}`);
+              hiddenTypes.value = '';
+              hiddenStates.value = '';
+              tr.querySelector('td.editable-uses .uses-content').innerHTML = '';
+              hiddenStates.dispatchEvent(new Event('change', { bubbles: true }));
+              hiddenTypes.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          });
         });
-      });
-  });
+    });
   });
 </script>

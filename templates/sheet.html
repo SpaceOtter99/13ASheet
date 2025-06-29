@@ -28,6 +28,7 @@
 
       function doSave(opts = {}) {
         console.log("Saving with data", updated)
+        addNotification("Saved!");
         fetch(`{{ url_for('update_character', id=request.view_args.id) }}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -175,13 +176,12 @@
           return;
         }
 
-        addNotification("Saved!");
         clearTimeout(debounceMap.get(this));
 
         const section = this.dataset.section;
         const rawKey = this.dataset.key;
         const val = this.type === 'number'
-          ? (parseInt(this.value, 10) || 0)
+          ? (parseInt(this.value, 10) || '')
           : this.value;
 
         const isIterable = !!this.closest('[data-iterable]');

@@ -15,16 +15,8 @@
       {% block content %}{% endblock %}
     </main>
     <footer>
-      <button id="uuid-btn">Generate UUID</button>
       <small>&copy; {{ 2025 }}</small>
     </footer>
     <script src="{{ url_for('static', filename='js/utils.js') }}"> </script>
-    <script>
-      const btn = document.getElementById('uuid-btn');
-      btn.addEventListener('click', () => {
-        const uuid = generateUUID();
-        btn.textContent = uuid;
-      });
-    </script>    
   </body>
 </html>
