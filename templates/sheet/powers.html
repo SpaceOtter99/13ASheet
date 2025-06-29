@@ -1,9 +1,9 @@
 <table style="width: 100%;">
   <thead>
     <tr>
-      <td colspan="4">
+      <th colspan="4">
         <h2>Powers / Spells</h2>
-      </td>
+      </th>
     </tr>
     <tr>
       <th>Uses</th>
@@ -52,33 +52,41 @@
   <form method="dialog">
     <p>Set uses for <strong>{{ power.name or ('Power ' ~ (loop.index0 + 1)) }}</strong>:</p>
     <div class="uses-grid">
-      <label>
-        <input type="radio" name="uses-type-{{ loop.index0 }}" value="daily" checked>
-        Daily
-      </label>
-      <input type="number" id="daily-count-{{ loop.index0 }}" min="0"
-        value="{{ (power.uses|default('daily:1')).split(':')[1]|default(1) }}">
+      <div>
+        <label>
+          <input type="radio" name="uses-type-{{ loop.index0 }}" value="daily" checked>
+          Daily
+        </label>
+        <input type="number" id="daily-count-{{ loop.index0 }}" min="0"
+          value="{{ (power.uses|default('daily:1')).split(':')[1]|default(1) }}">
+      </div>
 
-      <label>
-        <input type="radio" name="uses-type-{{ loop.index0 }}" value="recharge">
-        Recharge
-      </label>
-      <input type="number" id="recharge-count-{{ loop.index0 }}" min="1" max="20"
-        value="{{ (power.uses|default('recharge:16')).split(':')[1]|default(1) }}">
+      <div>
+        <label>
+          <input type="radio" name="uses-type-{{ loop.index0 }}" value="recharge">
+          Recharge
+        </label>
+        <input type="number" id="recharge-count-{{ loop.index0 }}" min="1" max="20"
+          value="{{ (power.uses|default('recharge:16')).split(':')[1]|default(1) }}">
+      </div>
 
+      <div>
       <label>
         <input type="radio" name="uses-type-{{ loop.index0 }}" value="perbattle">
         Per Battle
       </label>
       <input type="number" id="perbattle-count-{{ loop.index0 }}" min="0"
         value="{{ (power.uses|default('perbattle:1')).split(':')[1]|default(1) }}">
+      </div>
 
+      <div>
       <label>
         <input type="radio" name="uses-type-{{ loop.index0 }}" value="atwill">
         At Will
       </label>
+      </div>
     </div>
-    <div style="text-align:center; margin-top:1em;">
+    <div class="container inline">
       <button value="cancel">Cancel</button>
       <button id="uses-dialog-ok-{{ loop.index0 }}" value="default">OK</button>
     </div>
@@ -104,11 +112,12 @@
     line-height: 1;
   }
 
-  .uses-grid {
+  .uses-grid div {
     display: grid;
-    grid-template-columns: auto auto;
-    gap: 0.5em;
+    grid-template-columns: 7rem auto;
     align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding: .25rem 0;
   }
 
   tbody[data-iterable] tr:last-child td.editable-uses .uses-content,
@@ -217,7 +226,7 @@
 
         const row = td.closest('tr');
         const lvl = row.querySelector('input[data-key$="-level"]').value;
-        const name = row.querySelector('input[data-key$="-name"]').value.trim();
+        const name = row.querySelector('textarea[data-key$="-name"]').value.trim();
         const notes = row.querySelector('textarea[data-key$="-notes"]').value.trim();
         console.log('1', row);
         if (!lvl && !name && !notes) {
@@ -231,11 +240,12 @@
     });
 
     document.querySelectorAll('tbody[data-iterable] tr').forEach(tr => {
-      ['input[data-key$="-level"]', 'input[data-key$="-name"]', 'textarea[data-key$="-notes"]']
+      ['input[data-key$="-level"]', 'textarea[data-key$="-name"]', 'textarea[data-key$="-notes"]']
         .forEach(sel => {
+          console.log(tr, '|', sel)
           tr.querySelector(sel).addEventListener('change', () => {
             const lvl = tr.querySelector('input[data-key$="-level"]').value;
-            const name = tr.querySelector('input[data-key$="-name"]').value.trim();
+            const name = tr.querySelector('textarea[data-key$="-name"]').value.trim();
             const notes = tr.querySelector('textarea[data-key$="-notes"]').value.trim();
             if (!lvl && !name && !notes) {
               const idx = tr.querySelector('td.editable-uses').dataset.index;

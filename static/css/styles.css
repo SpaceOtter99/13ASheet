@@ -5,6 +5,8 @@
   --surface-accent: #ddd;
   --surface-dark: #333;
 
+  --border: #bbb;
+
   --primary: #5e8359;
 
   --shadow: rgba(0, 0, 0, 0.5);
@@ -56,10 +58,6 @@ p.final {
   line-height: 1.28;
 }
 
-dialog p {
-  text-align: center;
-}
-
 textarea.autoresizing {
   all: unset;
   width: 100%;
@@ -93,10 +91,14 @@ tr, th, td {
   height: 100%;
 }
 
+th {
+  background-color: var(--surface-accent);
+}
+
 th,
 td,
 .bordered {
-  border: 1px solid var(--surface-accent);
+  border: 1px solid var(--border);
   padding: 2px;
 }
 
@@ -116,6 +118,19 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+
+dialog {
+  width: 400px;
+}
+
+dialog p {
+  text-align: center;
+}
+
+dialog input,
+dialog textarea {
+  text-align: left !important;
 }
 
 dialog::backdrop {
@@ -184,7 +199,7 @@ label {
 button {
   color: var(--text);
   background-color: var(--surface);
-  border: 1px solid var(--surface-accent);
+  border: 1px solid var(--border);
   box-shadow: 1px 1px var(--shadow);
   cursor: pointer;
   user-select: none;
@@ -251,5 +266,5 @@ button.rightHover:hover {
   right: 4px;
   font-size: .5em;
   pointer-events: none;
-  color: var(--text);
+  color: var(--border);
 }
