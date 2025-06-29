@@ -49,6 +49,9 @@ class AutoAttrDict(dict):
                 v = AutoAttrDict(v)
             self[k] = v
 
+    def to_dict(self):
+        return ""
+
 # ─── helpers ────────────────────────────────────────────────────────────────
 def make_autovivifying_dict():
     return defaultdict(make_autovivifying_dict)
