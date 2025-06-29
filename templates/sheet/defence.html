@@ -21,11 +21,11 @@
 
     <tr>
       {% for defence in DEFENCES %}
-      <td>
+      <td class="editable-defence" data-defence="{{ defence }}" title="Right-click to edit">
         <p class="over">Modifiers</p>
         <p id="{{ defence }}-mod" data-section="defences" data-key="{{ defence }}-mod" type="number"></p>
-        <button type="button" class="edit-statlist-btn rightHover" data-defence="{{ defence }}"><i
-            class="fa fa-gear"></i></button>
+
+        <i class="fa fa-gear edit-statlist-icon"></i>
 
         <input type="hidden" id="{{ defence }}-statlist" data-section="defences" data-key="{{ defence }}-statlist"
           value="{{ character.defences[defence].statlist }}">
@@ -90,6 +90,24 @@
     border: 1px solid var(--surface-accent);
     padding: 0 4px;
   }
+
+  .editable-defence {
+    position: relative;
+    cursor: context-menu;
+  }
+
+  .edit-statlist-icon {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: .5em;
+    pointer-events: none;
+    color: var(--text);
+  }
+
+  .editable-defence:hover {
+    cursor: context-menu;
+  }
 </style>
 
 <script>
@@ -99,20 +117,17 @@
   }};
   const DEFENCES = {{ DEFENCES| tojson }};
 
-  // utility to get current stat-level from the stats table
   function getStatLevel(stat) {
     const txt = document.getElementById(stat + '-level').textContent;
     return parseInt(txt.replace('+', ''), 10) || 0;
   }
 
-  // median of an array of numbers
   function median(arr) {
     if (!arr.length) return 0;
     arr = arr.slice().sort((a, b) => a - b);
     return arr[Math.floor((arr.length - 1) / 2)];
   }
 
-  // recalculates all defences
   function updateDefences() {
     DEFENCES.forEach(def => {
       const baseEl = document.getElementById(def + '-base');
@@ -124,19 +139,15 @@
 
       const baseVal = parseInt(baseEl.value, 10) || 0;
       const bonusVal = parseInt(bonusEl.value, 10) || 0;
-
-      // 1) get the chosen stat names
       const statNames = statlistEl.value
         .split(',')
         .filter(s => s);
 
-      // 2) map to { stat, val }
       const pairs = statNames.map(s => ({
         stat: s,
         val: getStatLevel(s)
       }));
 
-      // 3) pick the median pair
       let medianPair = { stat: '', val: 0 };
       if (pairs.length) {
         pairs.sort((a, b) => a.val - b.val);
@@ -146,12 +157,9 @@
 
       const defenceStatVal = medianPair.val;
       const defenceStatName = medianPair.stat;
-
-      // 4) now compute modifiers & final
       const modVal = defenceStatVal + bonusVal;
       const finalVal = baseVal + modVal;
 
-      // 5) write out everything
       nameEl.textContent = defenceStatName || '—';
       modEl.textContent = (modVal >= 0 ? '+' + modVal : modVal);
       defEl.textContent = finalVal;
@@ -183,12 +191,7 @@
     const checkboxes = Array.from(
       dialog.querySelectorAll('input[name="stat"]')
     );
-
-    const btn = document.querySelector(`button.edit-statlist-btn[data-defence="${def}"]`);
-    btn.addEventListener('click', () => {
-      syncAndRecalc();
-      dialog.showModal();
-    });
+    const cell = document.querySelector(`.editable-defence[data-defence="${def}"]`);
 
     function syncAndRecalc() {
       const checked = checkboxes
@@ -199,12 +202,17 @@
       updateDefences();
     }
 
+    // right-click opens dialog
+    cell.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      syncAndRecalc();
+      dialog.showModal();
+    });
+
     checkboxes.forEach(cb => {
       cb.addEventListener('change', syncAndRecalc);
     });
-
     bonusInput.addEventListener('input', syncAndRecalc);
-
     okBtn.addEventListener('click', () => {
       dialog.close();
     });
